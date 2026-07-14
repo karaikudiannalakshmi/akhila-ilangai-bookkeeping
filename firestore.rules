@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Open read/write for now, matches the app's simple password-gate pattern.
+    // Tighten later with Firebase Auth + UID allowlist once more than one admin uses it.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
