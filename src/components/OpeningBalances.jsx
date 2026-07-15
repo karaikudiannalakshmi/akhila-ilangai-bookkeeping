@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { addDoc, collection, deleteDoc, doc, setDoc } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useCollection } from '../hooks/useCollection'
 import { FUNDS } from '../constants/chartOfAccounts'
@@ -17,6 +17,8 @@ export default function OpeningBalances() {
   const [cashBankForm, setCashBankForm] = useState({ cash: '', bank: '' })
 
   const [assetForm, setAssetForm] = useState({ name: '', fundId: 'general', value: '', dateAcquired: '' })
+  const [editingAssetId, setEditingAssetId] = useState(null)
+  const [editAssetForm, setEditAssetForm] = useState({})
 
   const saveFundBalances = async (e) => {
     e.preventDefault()
@@ -54,6 +56,22 @@ export default function OpeningBalances() {
 
   const deleteAsset = async (id) => {
     if (confirm('Delete this opening asset entry?')) await deleteDoc(doc(db, 'fixedAssetsOpening', id))
+  }
+
+  const startEditAsset = (a) => {
+    setEditingAssetId(a.id)
+    setEditAssetForm({ name: a.name, fundId: a.fundId, value: a.value, dateAcquired: a.dateAcquired || '' })
+  }
+
+  const saveAsset = async (id) => {
+    if (!editAssetForm.name.trim() || !editAssetForm.value) return
+    await updateDoc(doc(db, 'fixedAssetsOpening', id), {
+      name: editAssetForm.name,
+      fundId: editAssetForm.fundId,
+      value: Number(editAssetForm.value),
+      dateAcquired: editAssetForm.dateAcquired || null,
+    })
+    setEditingAssetId(null)
   }
 
   const existingBalance = (fundId) => openingBalances.find((b) => b.fundId === fundId)?.amount
@@ -150,11 +168,33 @@ export default function OpeningBalances() {
           <tbody>
             {openingAssets.map((a) => (
               <tr key={a.id}>
-                <td>{a.name}</td>
-                <td>{FUNDS.find((f) => f.id === a.fundId)?.name}</td>
-                <td>LKR {Number(a.value).toLocaleString()}</td>
-                <td>{a.dateAcquired || '—'}</td>
-                <td><button className="secondary small-btn" onClick={() => deleteAsset(a.id)}>Delete</button></td>
+                {editingAssetId === a.id ? (
+                  <>
+                    <td><input value={editAssetForm.name} onChange={(e) => setEditAssetForm({ ...editAssetForm, name: e.target.value })} /></td>
+                    <td>
+                      <select value={editAssetForm.fundId} onChange={(e) => setEditAssetForm({ ...editAssetForm, fundId: e.target.value })}>
+                        {FUNDS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                      </select>
+                    </td>
+                    <td><input type="number" value={editAssetForm.value} onChange={(e) => setEditAssetForm({ ...editAssetForm, value: e.target.value })} /></td>
+                    <td><input type="date" value={editAssetForm.dateAcquired} onChange={(e) => setEditAssetForm({ ...editAssetForm, dateAcquired: e.target.value })} /></td>
+                    <td>
+                      <button className="secondary small-btn" onClick={() => saveAsset(a.id)}>Save</button>{' '}
+                      <button className="secondary small-btn" onClick={() => setEditingAssetId(null)}>Cancel</button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td>{a.name}</td>
+                    <td>{FUNDS.find((f) => f.id === a.fundId)?.name}</td>
+                    <td>LKR {Number(a.value).toLocaleString()}</td>
+                    <td>{a.dateAcquired || '—'}</td>
+                    <td>
+                      <button className="secondary small-btn" onClick={() => startEditAsset(a)}>Edit</button>{' '}
+                      <button className="secondary small-btn" onClick={() => deleteAsset(a.id)}>Delete</button>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>

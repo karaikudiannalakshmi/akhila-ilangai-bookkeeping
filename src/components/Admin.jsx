@@ -16,6 +16,14 @@ export default function Admin() {
   const [seedingLoc, setSeedingLoc] = useState(false)
   const [msg, setMsg] = useState('')
 
+  // Inline edit state
+  const [editingHeadId, setEditingHeadId] = useState(null)
+  const [editHeadForm, setEditHeadForm] = useState({})
+  const [editingPropertyId, setEditingPropertyId] = useState(null)
+  const [editPropertyForm, setEditPropertyForm] = useState({})
+  const [editingLocationId, setEditingLocationId] = useState(null)
+  const [editLocationName, setEditLocationName] = useState('')
+
   const seedLocations = async () => {
     setSeedingLoc(true)
     for (const l of DEFAULT_LOCATIONS) {
@@ -37,6 +45,17 @@ export default function Admin() {
 
   const deleteLocation = async (id) => {
     if (confirm('Delete this centre/location?')) await deleteDoc(doc(db, 'locations', id))
+  }
+
+  const startEditLocation = (l) => {
+    setEditingLocationId(l.id)
+    setEditLocationName(l.name)
+  }
+
+  const saveLocation = async (id) => {
+    if (!editLocationName.trim()) return
+    await updateDoc(doc(db, 'locations', id), { name: editLocationName.trim() })
+    setEditingLocationId(null)
   }
 
   const seedDefaults = async () => {
@@ -65,6 +84,17 @@ export default function Admin() {
     }
   }
 
+  const startEditHead = (h) => {
+    setEditingHeadId(h.id)
+    setEditHeadForm({ name: h.name, type: h.type, category: h.category, fundId: h.fundId })
+  }
+
+  const saveHead = async (id) => {
+    if (!editHeadForm.name.trim()) return
+    await updateDoc(doc(db, 'coa', id), { ...editHeadForm })
+    setEditingHeadId(null)
+  }
+
   const addProperty = async (e) => {
     e.preventDefault()
     if (!newProperty.name.trim()) return
@@ -79,6 +109,26 @@ export default function Admin() {
     if (confirm('Delete this property?')) {
       await deleteDoc(doc(db, 'properties', id))
     }
+  }
+
+  const startEditProperty = (p) => {
+    setEditingPropertyId(p.id)
+    setEditPropertyForm({
+      name: p.name || '',
+      address: p.address || '',
+      tenantName: p.tenantName || '',
+      tenantContact: p.tenantContact || '',
+      monthlyRent: p.monthlyRent || '',
+    })
+  }
+
+  const saveProperty = async (id) => {
+    if (!editPropertyForm.name.trim()) return
+    await updateDoc(doc(db, 'properties', id), {
+      ...editPropertyForm,
+      monthlyRent: Number(editPropertyForm.monthlyRent) || 0,
+    })
+    setEditingPropertyId(null)
   }
 
   return (
@@ -109,11 +159,24 @@ export default function Admin() {
           <tbody>
             {locations.map((l) => (
               <tr key={l.id} style={{ opacity: l.active === false ? 0.4 : 1 }}>
-                <td>{l.name}</td>
-                <td>
-                  <button className="secondary small-btn" onClick={() => toggleLocation(l)}>{l.active === false ? 'Enable' : 'Disable'}</button>{' '}
-                  <button className="secondary small-btn" onClick={() => deleteLocation(l.id)}>Delete</button>
-                </td>
+                {editingLocationId === l.id ? (
+                  <>
+                    <td><input value={editLocationName} onChange={(e) => setEditLocationName(e.target.value)} /></td>
+                    <td>
+                      <button className="secondary small-btn" onClick={() => saveLocation(l.id)}>Save</button>{' '}
+                      <button className="secondary small-btn" onClick={() => setEditingLocationId(null)}>Cancel</button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td>{l.name}</td>
+                    <td>
+                      <button className="secondary small-btn" onClick={() => startEditLocation(l)}>Edit</button>{' '}
+                      <button className="secondary small-btn" onClick={() => toggleLocation(l)}>{l.active === false ? 'Enable' : 'Disable'}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => deleteLocation(l.id)}>Delete</button>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
@@ -169,14 +232,44 @@ export default function Admin() {
           <tbody>
             {heads.map((h) => (
               <tr key={h.id} style={{ opacity: h.active === false ? 0.4 : 1 }}>
-                <td>{h.name}</td>
-                <td className={h.type === 'Income' ? 'income' : 'expense'}>{h.type}</td>
-                <td>{h.category}</td>
-                <td>{FUNDS.find((f) => f.id === h.fundId)?.name || h.fundId}</td>
-                <td>
-                  <button className="secondary small-btn" onClick={() => toggleHead(h)}>{h.active === false ? 'Enable' : 'Disable'}</button>{' '}
-                  <button className="secondary small-btn" onClick={() => deleteHead(h.id)}>Delete</button>
-                </td>
+                {editingHeadId === h.id ? (
+                  <>
+                    <td><input value={editHeadForm.name} onChange={(e) => setEditHeadForm({ ...editHeadForm, name: e.target.value })} /></td>
+                    <td>
+                      <select value={editHeadForm.type} onChange={(e) => setEditHeadForm({ ...editHeadForm, type: e.target.value })}>
+                        <option>Income</option>
+                        <option>Expense</option>
+                      </select>
+                    </td>
+                    <td>
+                      <select value={editHeadForm.category} onChange={(e) => setEditHeadForm({ ...editHeadForm, category: e.target.value })}>
+                        <option>Revenue</option>
+                        <option>Capital</option>
+                      </select>
+                    </td>
+                    <td>
+                      <select value={editHeadForm.fundId} onChange={(e) => setEditHeadForm({ ...editHeadForm, fundId: e.target.value })}>
+                        {FUNDS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <button className="secondary small-btn" onClick={() => saveHead(h.id)}>Save</button>{' '}
+                      <button className="secondary small-btn" onClick={() => setEditingHeadId(null)}>Cancel</button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td>{h.name}</td>
+                    <td className={h.type === 'Income' ? 'income' : 'expense'}>{h.type}</td>
+                    <td>{h.category}</td>
+                    <td>{FUNDS.find((f) => f.id === h.fundId)?.name || h.fundId}</td>
+                    <td>
+                      <button className="secondary small-btn" onClick={() => startEditHead(h)}>Edit</button>{' '}
+                      <button className="secondary small-btn" onClick={() => toggleHead(h)}>{h.active === false ? 'Enable' : 'Disable'}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => deleteHead(h.id)}>Delete</button>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
@@ -213,10 +306,35 @@ export default function Admin() {
           <tbody>
             {properties.map((p) => (
               <tr key={p.id}>
-                <td>{p.name}</td>
-                <td>{p.tenantName}</td>
-                <td>LKR {Number(p.monthlyRent).toLocaleString()}</td>
-                <td><button className="secondary small-btn" onClick={() => deleteProperty(p.id)}>Delete</button></td>
+                {editingPropertyId === p.id ? (
+                  <>
+                    <td>
+                      <input style={{ marginBottom: 4 }} value={editPropertyForm.name} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, name: e.target.value })} placeholder="Name" />
+                      <input value={editPropertyForm.address} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, address: e.target.value })} placeholder="Address" />
+                    </td>
+                    <td>
+                      <input style={{ marginBottom: 4 }} value={editPropertyForm.tenantName} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, tenantName: e.target.value })} placeholder="Tenant Name" />
+                      <input value={editPropertyForm.tenantContact} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, tenantContact: e.target.value })} placeholder="Tenant Contact" />
+                    </td>
+                    <td>
+                      <input type="number" value={editPropertyForm.monthlyRent} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, monthlyRent: e.target.value })} />
+                    </td>
+                    <td>
+                      <button className="secondary small-btn" onClick={() => saveProperty(p.id)}>Save</button>{' '}
+                      <button className="secondary small-btn" onClick={() => setEditingPropertyId(null)}>Cancel</button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td>{p.name}</td>
+                    <td>{p.tenantName}</td>
+                    <td>LKR {Number(p.monthlyRent).toLocaleString()}</td>
+                    <td>
+                      <button className="secondary small-btn" onClick={() => startEditProperty(p)}>Edit</button>{' '}
+                      <button className="secondary small-btn" onClick={() => deleteProperty(p.id)}>Delete</button>
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
