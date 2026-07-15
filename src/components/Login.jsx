@@ -19,7 +19,6 @@ export default function Login({ onSuccess }) {
     <div className="login-screen">
       <div className="card">
         <h2>Akhila Ilangai Kamban Kazhakam</h2>
-        <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Aishwarya Lakshmi Temple - Accounts</p>
         <form onSubmit={handleSubmit}>
           <label>Enter Password</label>
           <input

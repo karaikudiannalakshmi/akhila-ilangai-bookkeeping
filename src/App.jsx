@@ -43,7 +43,6 @@ export default function App() {
       <div className="app-header">
         <div>
           <h1>Akhila Ilangai Kamban Kazhakam</h1>
-          <div className="sub">Aishwarya Lakshmi Temple - Bookkeeping</div>
         </div>
         <button
           className="secondary"
