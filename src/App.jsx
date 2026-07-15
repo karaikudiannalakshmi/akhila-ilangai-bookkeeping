@@ -20,7 +20,7 @@ const TABS = [
   { id: 'bankbook', label: 'Bank Book' },
   { id: 'ledger', label: 'All Entries' },
   { id: 'genledger', label: 'Ledgers' },
-  { id: 'trial', label: 'Trial Balance' },
+  { id: 'trial', label: 'Income & Expenditure' },
   { id: 'balancesheet', label: 'Balance Sheet' },
   { id: 'analysis', label: 'Expenditure Analysis' },
   { id: 'rent', label: 'Rent Collection' },

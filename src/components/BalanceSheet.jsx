@@ -25,7 +25,13 @@ function snapshotAsOf(vouchers, openingBalances, openingAssets, opening, branche
   const totalFunds = branchRows.reduce((s, b) => s + b.balance, 0)
   const totalAssets = cashBalance + bankBalance + fixedAssetsTotal
 
-  return { cashBalance, bankBalance, fixedAssetsTotal, branchRows, totalFunds, totalAssets }
+  const fixedAssetsByBranch = branches.map((b) => {
+    const openingForBranch = openingAssets.filter((a) => resolveBranchId(a) === b.id).reduce((s, a) => s + Number(a.value), 0)
+    const additionsForBranch = upToDate.filter((v) => v.category === 'Capital' && resolveBranchId(v) === b.id).reduce((s, v) => s + v.amount, 0)
+    return { ...b, value: openingForBranch + additionsForBranch }
+  })
+
+  return { cashBalance, bankBalance, fixedAssetsTotal, branchRows, totalFunds, totalAssets, fixedAssetsByBranch }
 }
 
 export default function BalanceSheet() {
@@ -63,7 +69,7 @@ export default function BalanceSheet() {
 
       <div className="grid-2">
         <div>
-          <h3 style={{ fontSize: '0.9rem', color: 'var(--maroon)' }}>Branch Funds & Liabilities</h3>
+          <h3 style={{ fontSize: '0.9rem', color: 'var(--maroon)' }}>Funds & Liabilities — by Branch</h3>
           <table>
             <thead><tr><th>Branch</th><th>Opening (b/f)</th><th>Movement</th><th>Closing</th></tr></thead>
             <tbody>
@@ -81,7 +87,7 @@ export default function BalanceSheet() {
             </tbody>
             <tfoot>
               <tr style={{ fontWeight: 700 }}>
-                <td>Total Funds</td>
+                <td>Total Funds (Consolidated)</td>
                 <td>{openingSnap.totalFunds.toLocaleString()}</td>
                 <td>{(closing.totalFunds - openingSnap.totalFunds).toLocaleString()}</td>
                 <td>LKR {closing.totalFunds.toLocaleString()}</td>
@@ -91,7 +97,7 @@ export default function BalanceSheet() {
         </div>
 
         <div>
-          <h3 style={{ fontSize: '0.9rem', color: 'var(--maroon)' }}>Assets</h3>
+          <h3 style={{ fontSize: '0.9rem', color: 'var(--maroon)' }}>Assets — Consolidated</h3>
           <table>
             <thead><tr><th>Item</th><th>Opening (b/f)</th><th>Movement</th><th>Closing</th></tr></thead>
             <tbody>
@@ -123,7 +129,25 @@ export default function BalanceSheet() {
               </tr>
             </tfoot>
           </table>
+          <p style={{ fontSize: '0.7rem', color: '#6b6258', marginTop: 6 }}>
+            Cash and Bank are held centrally (one cash box, one bank account), so they aren't split by branch. Fixed Assets can be broken out below.
+          </p>
         </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 12 }}>
+        <h3 style={{ fontSize: '0.9rem', color: 'var(--maroon)', marginTop: 0 }}>Fixed Assets — by Branch</h3>
+        <table>
+          <thead><tr><th>Branch</th><th>Closing Value</th></tr></thead>
+          <tbody>
+            {closing.fixedAssetsByBranch.map((b) => (
+              <tr key={b.id}><td>{b.name}</td><td>{b.value.toLocaleString()}</td></tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr style={{ fontWeight: 700 }}><td>Total Fixed Assets (Consolidated)</td><td>LKR {closing.fixedAssetsTotal.toLocaleString()}</td></tr>
+          </tfoot>
+        </table>
       </div>
 
       <div className="card" style={{ marginTop: 12, background: Math.abs(diff) < 1 ? '#eef7ee' : '#fdf0ee' }}>

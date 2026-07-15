@@ -11,15 +11,20 @@ export default function GeneralLedger() {
   const { data: openingCashBankData } = useCollection('openingCashBank')
   const opening = openingCashBankData.find((d) => d.id === 'main')
   const [headId, setHeadId] = useState('')
+  const [branchFilter, setBranchFilter] = useState('all')
   const [period, setPeriod] = useState(defaultPeriodValue())
 
   const { from, to, label } = resolvePeriod(period)
   const selectedHead = heads.find((h) => h.id === headId)
 
+  const incomeHeads = heads.filter((h) => h.type === 'Income')
+  const expenseHeads = heads.filter((h) => h.type === 'Expense')
+
   const rows = useMemo(() => {
     if (!headId) return []
     const entries = vouchers
       .filter((v) => v.headId === headId)
+      .filter((v) => branchFilter === 'all' || resolveBranchId(v) === branchFilter)
       .filter((v) => !from || v.date >= from)
       .filter((v) => !to || v.date <= to)
       .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
@@ -30,7 +35,7 @@ export default function GeneralLedger() {
       balance += v.amount
       return { ...v, balance }
     })
-  }, [vouchers, headId, from, to])
+  }, [vouchers, headId, branchFilter, from, to])
 
   const total = rows.reduce((s, v) => s + v.amount, 0)
 
@@ -41,15 +46,20 @@ export default function GeneralLedger() {
       <div className="filter-row">
         <select value={headId} onChange={(e) => setHeadId(e.target.value)}>
           <option value="">-- Select a Head --</option>
-          {branches.map((b) => {
-            const opts = heads.filter((h) => resolveBranchId(h) === b.id)
-            if (opts.length === 0) return null
-            return (
-              <optgroup key={b.id} label={b.name}>
-                {opts.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
-              </optgroup>
-            )
-          })}
+          {incomeHeads.length > 0 && (
+            <optgroup label="Income">
+              {incomeHeads.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+            </optgroup>
+          )}
+          {expenseHeads.length > 0 && (
+            <optgroup label="Expense">
+              {expenseHeads.map((h) => <option key={h.id} value={h.id}>{h.name} {h.category === 'Capital' ? '(Capital)' : ''}</option>)}
+            </optgroup>
+          )}
+        </select>
+        <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
+          <option value="all">All Branches</option>
+          {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
       <PeriodFilter vouchers={vouchers} openingDate={opening?.asOfDate} value={period} onChange={setPeriod} />

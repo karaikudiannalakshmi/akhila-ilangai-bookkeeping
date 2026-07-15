@@ -10,7 +10,7 @@ export default function Admin() {
   const { data: properties } = useCollection('properties')
   const { data: branches } = useCollection('branches')
 
-  const [newHead, setNewHead] = useState({ name: '', type: 'Expense', category: 'Revenue', branchId: 'headoffice' })
+  const [newHead, setNewHead] = useState({ name: '', type: 'Expense', category: 'Revenue' })
   const [newProperty, setNewProperty] = useState({ name: '', address: '', tenantName: '', tenantContact: '', monthlyRent: '' })
   const [newBranch, setNewBranch] = useState('')
   const [seeding, setSeeding] = useState(false)
@@ -72,7 +72,7 @@ export default function Admin() {
     e.preventDefault()
     if (!newHead.name.trim()) return
     await addDoc(collection(db, 'coa'), { ...newHead, active: true })
-    setNewHead({ name: '', type: 'Expense', category: 'Revenue', branchId: branches[0]?.id || 'headoffice' })
+    setNewHead({ name: '', type: 'Expense', category: 'Revenue' })
   }
 
   const toggleHead = async (h) => {
@@ -87,7 +87,7 @@ export default function Admin() {
 
   const startEditHead = (h) => {
     setEditingHeadId(h.id)
-    setEditHeadForm({ name: h.name, type: h.type, category: h.category, branchId: h.branchId || branches[0]?.id || 'headoffice' })
+    setEditHeadForm({ name: h.name, type: h.type, category: h.category })
   }
 
   const saveHead = async (id) => {
@@ -216,10 +216,6 @@ export default function Admin() {
               </select>
             </div>
           </div>
-          <label>Branch</label>
-          <select value={newHead.branchId} onChange={(e) => setNewHead({ ...newHead, branchId: e.target.value })}>
-            {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
           <button className="primary" type="submit">Add Head</button>
         </form>
       </div>
@@ -228,7 +224,7 @@ export default function Admin() {
         <h2>Existing Heads ({heads.length})</h2>
         <table>
           <thead>
-            <tr><th>Name</th><th>Type</th><th>Category</th><th>Branch</th><th></th></tr>
+            <tr><th>Name</th><th>Type</th><th>Category</th><th></th></tr>
           </thead>
           <tbody>
             {heads.map((h) => (
@@ -249,11 +245,6 @@ export default function Admin() {
                       </select>
                     </td>
                     <td>
-                      <select value={editHeadForm.branchId} onChange={(e) => setEditHeadForm({ ...editHeadForm, branchId: e.target.value })}>
-                        {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                      </select>
-                    </td>
-                    <td>
                       <button className="secondary small-btn" onClick={() => saveHead(h.id)}>Save</button>{' '}
                       <button className="secondary small-btn" onClick={() => setEditingHeadId(null)}>Cancel</button>
                     </td>
@@ -263,7 +254,6 @@ export default function Admin() {
                     <td>{h.name}</td>
                     <td className={h.type === 'Income' ? 'income' : 'expense'}>{h.type}</td>
                     <td>{h.category}</td>
-                    <td>{branches.find((b) => b.id === h.branchId)?.name || <span style={{ color: 'var(--red)' }}>Unclassified — edit to assign</span>}</td>
                     <td>
                       <button className="secondary small-btn" onClick={() => startEditHead(h)}>Edit</button>{' '}
                       <button className="secondary small-btn" onClick={() => toggleHead(h)}>{h.active === false ? 'Enable' : 'Disable'}</button>{' '}

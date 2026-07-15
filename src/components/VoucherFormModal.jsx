@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { PAYMENT_MODES } from '../constants/chartOfAccounts'
-import { resolveBranchId } from '../utils/branch'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
@@ -13,6 +12,7 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
     date: voucher?.date || todayStr(),
     type: voucher?.type || 'Income',
     headId: voucher?.headId || '',
+    branchId: voucher?.branchId || '',
     propertyId: voucher?.propertyId || '',
     amount: voucher?.amount || '',
     paymentMode: voucher?.paymentMode || allowedModes[0],
@@ -29,18 +29,17 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
 
   const handleSave = async (e) => {
     e.preventDefault()
-    if (!form.headId || !form.amount) return
+    if (!form.headId || !form.amount || !form.branchId) return
     setSaving(true)
     const head = heads.find((h) => h.id === form.headId)
-    const branchId = resolveBranchId(head)
-    const branch = branches.find((b) => b.id === branchId)
+    const branch = branches.find((b) => b.id === form.branchId)
     const payload = {
       date: form.date,
       type: form.type,
       headId: form.headId,
       headName: head.name,
       category: head.category,
-      branchId: branchId || null,
+      branchId: form.branchId,
       branchName: branch?.name || '',
       propertyId: isRentHead ? form.propertyId : null,
       amount: Number(form.amount),
@@ -75,18 +74,31 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
             </div>
           </div>
 
-          <label>Head (grouped by Branch)</label>
+          <label>Branch</label>
+          <select required value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })}>
+            <option value="">-- Select Branch --</option>
+            {branches.filter((b) => b.active !== false).map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+
+          <label>Head</label>
           <select value={form.headId} onChange={(e) => setForm({ ...form, headId: e.target.value })}>
             <option value="">-- Select --</option>
-            {branches.map((b) => {
-              const opts = activeHeads.filter((h) => resolveBranchId(h) === b.id)
-              if (opts.length === 0) return null
-              return (
-                <optgroup key={b.id} label={b.name}>
-                  {opts.map((h) => <option key={h.id} value={h.id}>{h.name} {h.category === 'Capital' ? '(Capital)' : ''}</option>)}
-                </optgroup>
-              )
-            })}
+            {activeHeads.filter((h) => h.category === 'Revenue').length > 0 && (
+              <optgroup label="Revenue">
+                {activeHeads.filter((h) => h.category === 'Revenue').map((h) => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </optgroup>
+            )}
+            {activeHeads.filter((h) => h.category === 'Capital').length > 0 && (
+              <optgroup label="Capital">
+                {activeHeads.filter((h) => h.category === 'Capital').map((h) => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </optgroup>
+            )}
           </select>
 
           {isRentHead && (

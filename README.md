@@ -20,23 +20,22 @@ there's no manual year-end closing step. The Balance Sheet additionally shows Op
 → Closing columns for Funds, Fixed Assets, Cash, and Bank for the selected period.
 
 ## Structure
-- **Branches** (replaces the old separate Fund + Centre/Location fields): Head Office - Colombo,
-  Aishwarya Lakshmi Temple - Colombo, Jaffna Building, Kilinochchi Training Centre. Manage these
-  under Admin — add, edit, disable, or delete branches as needed.
-- Each income/expense head belongs to exactly one Branch and is marked Revenue or Capital. When
-  entering a transaction, picking the Head automatically classifies it under the right Branch —
-  there's no separate Branch dropdown to fill in for regular income/expense entries.
-- Contra entries (cash ⇄ bank transfers) still need a manual Branch selection, since there's no
-  Head to derive it from.
+- **Branches**: Head Office - Colombo, Aishwarya Lakshmi Temple - Colombo, Jaffna, Kilinochchi
+  Training Centre. Manage these under Admin — add, edit, disable, or delete branches as needed.
+- **Heads are generic and shared across all branches** — a short, single list (e.g. "Donations",
+  "Rent Income", "Maintenance & Repairs") rather than a duplicate head per branch. When entering a
+  transaction, you pick a Head and a Branch independently — e.g. Colombo property rent is entered
+  under the generic "Rent Income" head, Branch = Head Office. Each head is marked Revenue or Capital.
+- Contra entries (cash ⇄ bank transfers) also pick a Branch directly, same as regular entries.
 - Capital items are excluded from the Trial Balance and tracked in Fixed Assets instead.
 - Rent income is tracked per property/tenant.
 
 ### Legacy data note
-Entries and heads created before the Fund→Branch merge are automatically mapped to the closest
-matching Branch (Temple Fund→Temple, General Fund→Head Office, Building Fund→Jaffna Building,
-Property Fund→Head Office) so historical reports keep working without a manual migration. Any head
-that can't be auto-mapped shows as "Unclassified" in Admin — just click Edit and pick the correct
-Branch once.
+Entries and heads created before the Fund→Branch merge, or during the brief period where heads
+were branch-specific, are automatically mapped to the closest matching Branch for reporting
+purposes — no manual migration needed. Duplicate branch-specific heads from that period (e.g. an
+old "Jaffna Donations" head) can be safely deleted under Admin once you've switched to using the
+generic "Donations - General" head with Branch selected separately.
 
 ## Entry workflow
 All entries are added, edited, and deleted from **Cash Book** (Cash-mode transactions) or
@@ -60,9 +59,13 @@ bank or deposited into the bank. A single Contra entry:
 - **Cash Book** — add/edit/delete Cash-mode entries, with running balance
 - **Bank Book** — add/edit/delete Cheque/Bank Transfer/Online entries, with running balance
 - **All Entries** — read-only consolidated view with filters
-- **Ledgers** — head-wise account statement with running total
-- **Trial Balance** — revenue income/expense by head, fund-wise or consolidated
-- **Balance Sheet** — Funds & Liabilities vs Assets (Fixed Assets + Cash + Bank) as of any date
+- **Ledgers** — head-wise account statement with running total, filterable by Branch
+- **Income & Expenditure Account** — the main P&L report. Top table respects a Branch filter
+  (pick one branch, or "All Branches (Consolidated)"). Below it, a Branch-wise Comparison always
+  shows every branch side by side with a consolidated Total column, regardless of the filter above.
+- **Balance Sheet** — Funds & Liabilities broken out per branch with a consolidated total; Cash and
+  Bank shown consolidated only (held centrally, not per branch); Fixed Assets shown both
+  consolidated and broken out per branch.
 
 ## Local setup
 ```
