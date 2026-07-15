@@ -7,6 +7,16 @@ for the rented property, and a fixed assets register for capital items.
 ## Stack
 React + Vite + Firebase Firestore + Vercel.
 
+## Bilingual (English / Tamil)
+Every screen — Dashboard, Cash Book, Bank Book, All Entries, Ledgers, Income & Expenditure
+Account, Balance Sheet, Fixed Assets, Rent Collection, Opening Balances, and Admin — is available
+in both English and Tamil. Toggle with the **EN / த** button in the top-right corner (also on the
+login screen). The choice is remembered per device (stored in the browser, not per-user). Data you
+type yourself — branch names, head names, property names, narrations — stays exactly as entered in
+whichever language you typed it; only the app's own labels, buttons, and messages are translated.
+Add new terms in `src/i18n/translations.js` if you introduce new heads/branches you'd like labeled
+bilingually elsewhere in the app.
+
 ## Financial Year & period selection
 The trust's financial year runs **1 April to 31 March**. Every report — Cash Book, Bank Book,
 All Entries, Ledgers, Trial Balance, Balance Sheet, Fixed Assets, Expenditure Analysis — has a

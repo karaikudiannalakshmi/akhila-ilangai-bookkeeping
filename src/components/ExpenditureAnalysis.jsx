@@ -4,10 +4,12 @@ import { useCollection } from '../hooks/useCollection'
 import PeriodFilter from './PeriodFilter'
 import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
 import { resolveBranchId } from '../utils/branch'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const COLORS = ['#7a1f2b', '#c9a227', '#2e7d32', '#4a6fa5', '#b3261e', '#8e6c88', '#5c7457', '#d98c3f']
 
 export default function ExpenditureAnalysis() {
+  const { t } = useLanguage()
   const { data: vouchers } = useCollection('vouchers')
   const { data: branches } = useCollection('branches')
   const { data: openingCashBankData } = useCollection('openingCashBank')
@@ -37,18 +39,18 @@ export default function ExpenditureAnalysis() {
 
   return (
     <div className="card">
-      <h2>Expenditure Analysis</h2>
-      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Period: {label} ({from} to {to})</p>
+      <h2>{t('expenditureAnalysisTitle')}</h2>
+      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>{t('period')}: {label} ({from} to {to})</p>
       <PeriodFilter vouchers={vouchers} openingDate={opening?.asOfDate} value={period} onChange={setPeriod} />
       <div className="filter-row">
         <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
-          <option value="all">All Branches</option>
+          <option value="all">{t('allBranches')}</option>
           {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
 
       {total === 0 ? (
-        <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No expense entries in this period.</p>
+        <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noExpensePeriod')}</p>
       ) : (
         <>
           <div style={{ width: '100%', height: 260 }}>
@@ -63,7 +65,7 @@ export default function ExpenditureAnalysis() {
           </div>
 
           <table style={{ marginTop: 10 }}>
-            <thead><tr><th>Head</th><th>Amount</th><th>% of Total</th></tr></thead>
+            <thead><tr><th>{t('head')}</th><th>{t('amount')}</th><th>{t('percentOfTotal')}</th></tr></thead>
             <tbody>
               {expenseData.map((d, i) => (
                 <tr key={d.name}>
@@ -74,7 +76,7 @@ export default function ExpenditureAnalysis() {
               ))}
             </tbody>
             <tfoot>
-              <tr style={{ fontWeight: 700 }}><td>Total</td><td>LKR {total.toLocaleString()}</td><td>100%</td></tr>
+              <tr style={{ fontWeight: 700 }}><td>{t('total')}</td><td>LKR {total.toLocaleString()}</td><td>100%</td></tr>
             </tfoot>
           </table>
         </>

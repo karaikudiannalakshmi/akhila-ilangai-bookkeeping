@@ -4,8 +4,10 @@ import { useCollection } from '../hooks/useCollection'
 import { cashDelta, bankDelta } from '../utils/cashBank'
 import { currentFY } from '../utils/financialYear'
 import { resolveBranchId, findRecordForBranch } from '../utils/branch'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function Dashboard() {
+  const { t } = useLanguage()
   const { data: vouchers } = useCollection('vouchers')
   const { data: properties } = useCollection('properties')
   const { data: openingBalances } = useCollection('openingBalances')
@@ -80,30 +82,30 @@ export default function Dashboard() {
   return (
     <div>
       <div className="summary-grid">
-        <div className="summary-box"><div className="value">LKR {cashPosition.toLocaleString()}</div><div className="label">Cash in Hand</div></div>
-        <div className="summary-box"><div className="value">LKR {bankPosition.toLocaleString()}</div><div className="label">Bank Balance</div></div>
+        <div className="summary-box"><div className="value">LKR {cashPosition.toLocaleString()}</div><div className="label">{t('cashInHand')}</div></div>
+        <div className="summary-box"><div className="value">LKR {bankPosition.toLocaleString()}</div><div className="label">{t('bankBalance')}</div></div>
       </div>
 
       <div className="summary-grid">
-        <div className="summary-box"><div className="value income">LKR {monthIncome.toLocaleString()}</div><div className="label">This Month Income</div></div>
-        <div className="summary-box"><div className="value expense">LKR {monthExpense.toLocaleString()}</div><div className="label">This Month Expense</div></div>
-        <div className="summary-box"><div className="value">LKR {(monthIncome - monthExpense).toLocaleString()}</div><div className="label">Net Surplus</div></div>
-        <div className="summary-box"><div className="value expense">LKR {rentArrears.toLocaleString()}</div><div className="label">Rent Arrears (This Mo.)</div></div>
+        <div className="summary-box"><div className="value income">LKR {monthIncome.toLocaleString()}</div><div className="label">{t('thisMonthIncome')}</div></div>
+        <div className="summary-box"><div className="value expense">LKR {monthExpense.toLocaleString()}</div><div className="label">{t('thisMonthExpense')}</div></div>
+        <div className="summary-box"><div className="value">LKR {(monthIncome - monthExpense).toLocaleString()}</div><div className="label">{t('netSurplusLabel')}</div></div>
+        <div className="summary-box"><div className="value expense">LKR {rentArrears.toLocaleString()}</div><div className="label">{t('rentArrearsThisMonth')}</div></div>
       </div>
 
       <div className="card">
-        <h2>{fy.label} — Year to Date</h2>
+        <h2>{fy.label} — {t('yearToDate')}</h2>
         <div className="summary-grid" style={{ marginBottom: 0 }}>
-          <div className="summary-box"><div className="value income">LKR {fyIncome.toLocaleString()}</div><div className="label">Income (FYTD)</div></div>
-          <div className="summary-box"><div className="value expense">LKR {fyExpense.toLocaleString()}</div><div className="label">Expense (FYTD)</div></div>
-          <div className="summary-box"><div className="value">LKR {(fyIncome - fyExpense).toLocaleString()}</div><div className="label">Net Surplus (FYTD)</div></div>
+          <div className="summary-box"><div className="value income">LKR {fyIncome.toLocaleString()}</div><div className="label">{t('incomeFYTD')}</div></div>
+          <div className="summary-box"><div className="value expense">LKR {fyExpense.toLocaleString()}</div><div className="label">{t('expenseFYTD')}</div></div>
+          <div className="summary-box"><div className="value">LKR {(fyIncome - fyExpense).toLocaleString()}</div><div className="label">{t('netSurplusFYTD')}</div></div>
         </div>
       </div>
 
       <div className="card">
-        <h2>Branch-wise Summary (This Month)</h2>
+        <h2>{t('branchWiseSummary')}</h2>
         <table>
-          <thead><tr><th>Branch</th><th>Income</th><th>Expense</th><th>Net</th></tr></thead>
+          <thead><tr><th>{t('branch')}</th><th>{t('income')}</th><th>{t('expense')}</th><th>{t('net') }</th></tr></thead>
           <tbody>
             {branchSummary.map((c) => (
               <tr key={c.name}>
@@ -115,13 +117,13 @@ export default function Dashboard() {
             ))}
           </tbody>
         </table>
-        {branchSummary.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No entries this month yet.</p>}
+        {branchSummary.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noEntriesThisMonth')}</p>}
       </div>
 
       <div className="card">
-        <h2>Branch Balances</h2>
+        <h2>{t('branchBalances')}</h2>
         <table>
-          <thead><tr><th>Branch</th><th>Balance</th></tr></thead>
+          <thead><tr><th>{t('branch')}</th><th>{t('balance')}</th></tr></thead>
           <tbody>
             {branchBalances.map((b) => (
               <tr key={b.id}><td>{b.name}</td><td className={b.balance >= 0 ? 'income' : 'expense'}>LKR {b.balance.toLocaleString()}</td></tr>
@@ -131,7 +133,7 @@ export default function Dashboard() {
       </div>
 
       <div className="card">
-        <h2>6-Month Trend</h2>
+        <h2>{t('sixMonthTrend')}</h2>
         <div style={{ width: '100%', height: 220 }}>
           <ResponsiveContainer>
             <LineChart data={trend}>
@@ -146,14 +148,14 @@ export default function Dashboard() {
       </div>
 
       <div className="card">
-        <h2>Top 5 Expense Heads This Month</h2>
+        <h2>{t('topExpenseHeads')}</h2>
         <table>
-          <thead><tr><th>Head</th><th>Amount</th></tr></thead>
+          <thead><tr><th>{t('head')}</th><th>{t('amount')}</th></tr></thead>
           <tbody>
             {topExpenses.map((e) => <tr key={e.name}><td>{e.name}</td><td className="expense">{e.value.toLocaleString()}</td></tr>)}
           </tbody>
         </table>
-        {topExpenses.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No expenses recorded this month.</p>}
+        {topExpenses.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noExpensesThisMonth')}</p>}
       </div>
     </div>
   )

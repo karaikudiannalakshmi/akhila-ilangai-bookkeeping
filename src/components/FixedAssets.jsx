@@ -3,8 +3,10 @@ import { useCollection } from '../hooks/useCollection'
 import PeriodFilter from './PeriodFilter'
 import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
 import { resolveBranchId } from '../utils/branch'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function FixedAssets() {
+  const { t } = useLanguage()
   const { data: vouchers } = useCollection('vouchers')
   const { data: openingAssets } = useCollection('fixedAssetsOpening')
   const { data: openingCashBankData } = useCollection('openingCashBank')
@@ -36,19 +38,19 @@ export default function FixedAssets() {
 
   return (
     <div>
-      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Period: {label} ({from} to {to})</p>
+      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>{t('period')}: {label} ({from} to {to})</p>
       <PeriodFilter vouchers={vouchers} openingDate={opening?.asOfDate} value={period} onChange={setPeriod} />
 
       <div className="summary-grid">
-        <div className="summary-box"><div className="value">LKR {openingForPeriod.toLocaleString()}</div><div className="label">Opening (Carried Forward)</div></div>
-        <div className="summary-box"><div className="value income">LKR {additionsTotal.toLocaleString()}</div><div className="label">Additions This Period</div></div>
-        <div className="summary-box"><div className="value">LKR {closingForPeriod.toLocaleString()}</div><div className="label">Closing Fixed Assets</div></div>
+        <div className="summary-box"><div className="value">LKR {openingForPeriod.toLocaleString()}</div><div className="label">{t('openingCarriedForwardLabel')}</div></div>
+        <div className="summary-box"><div className="value income">LKR {additionsTotal.toLocaleString()}</div><div className="label">{t('additionsThisPeriod')}</div></div>
+        <div className="summary-box"><div className="value">LKR {closingForPeriod.toLocaleString()}</div><div className="label">{t('closingFixedAssets')}</div></div>
       </div>
 
       <div className="card">
-        <h2>Opening Assets (as per last Balance Sheet)</h2>
+        <h2>{t('openingAssetsHeading')}</h2>
         <table>
-          <thead><tr><th>Asset</th><th>Fund</th><th>Value</th><th>Acquired</th></tr></thead>
+          <thead><tr><th>{t('assetName')}</th><th>{t('branch')}</th><th>{t('amount')}</th><th>{t('acquired')}</th></tr></thead>
           <tbody>
             {openingAssets.map((a) => (
               <tr key={a.id}>
@@ -60,21 +62,20 @@ export default function FixedAssets() {
             ))}
           </tbody>
           <tfoot>
-            <tr style={{ fontWeight: 700 }}><td colSpan={2}>Total</td><td>{openingRegisterTotal.toLocaleString()}</td><td></td></tr>
+            <tr style={{ fontWeight: 700 }}><td colSpan={2}>{t('total')}</td><td>{openingRegisterTotal.toLocaleString()}</td><td></td></tr>
           </tfoot>
         </table>
         {openingAssets.length === 0 && (
           <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>
-            No opening assets recorded yet. Once you have the last balance sheet, add them under the
-            Opening Balances tab.
+            {t('noOpeningAssetsNote')}
           </p>
         )}
       </div>
 
       <div className="card">
-        <h2>Additions in Selected Period</h2>
+        <h2>{t('additionsInPeriod')}</h2>
         <table>
-          <thead><tr><th>Date</th><th>Item / Head</th><th>Fund</th><th>Amount</th><th>Narration</th></tr></thead>
+          <thead><tr><th>{t('date')}</th><th>{t('head')}</th><th>{t('branch')}</th><th>{t('amount')}</th><th>{t('narrationCol')}</th></tr></thead>
           <tbody>
             {additionsInPeriod.map((v) => (
               <tr key={v.id}>
@@ -87,10 +88,10 @@ export default function FixedAssets() {
             ))}
           </tbody>
           <tfoot>
-            <tr style={{ fontWeight: 700 }}><td colSpan={3}>Total</td><td className="expense">{additionsTotal.toLocaleString()}</td><td></td></tr>
+            <tr style={{ fontWeight: 700 }}><td colSpan={3}>{t('total')}</td><td className="expense">{additionsTotal.toLocaleString()}</td><td></td></tr>
           </tfoot>
         </table>
-        {additionsInPeriod.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No capital expenditure in this period.</p>}
+        {additionsInPeriod.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noCapitalExpenditurePeriod')}</p>}
       </div>
     </div>
   )

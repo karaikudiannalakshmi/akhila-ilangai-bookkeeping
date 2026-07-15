@@ -3,8 +3,10 @@ import { addDoc, collection, deleteDoc, doc, setDoc, updateDoc } from 'firebase/
 import { db } from '../firebase'
 import { useCollection } from '../hooks/useCollection'
 import { findRecordForBranch, resolveBranchId } from '../utils/branch'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function OpeningBalances() {
+  const { t } = useLanguage()
   const { data: openingBalances } = useCollection('openingBalances')
   const { data: openingAssets } = useCollection('fixedAssetsOpening')
   const { data: openingCashBankData } = useCollection('openingCashBank')
@@ -21,23 +23,23 @@ export default function OpeningBalances() {
 
   const saveFundBalances = async (e) => {
     e.preventDefault()
-    if (!asOfDate) { alert('Please set the as-of date (usually the balance sheet date).'); return }
+    if (!asOfDate) { alert(t('pleaseSetAsOfDate')); return }
     for (const b of branches) {
       const amount = Number(balForm[b.id]) || 0
       await setDoc(doc(db, 'openingBalances', b.id), { branchId: b.id, amount, asOfDate })
     }
-    alert('Opening branch balances saved.')
+    alert(t('savedBranchBalances'))
   }
 
   const saveCashBank = async (e) => {
     e.preventDefault()
-    if (!asOfDate) { alert('Please set the as-of date (usually the balance sheet date).'); return }
+    if (!asOfDate) { alert(t('pleaseSetAsOfDate')); return }
     await setDoc(doc(db, 'openingCashBank', 'main'), {
       cash: Number(cashBankForm.cash) || 0,
       bank: Number(cashBankForm.bank) || 0,
       asOfDate,
     })
-    alert('Opening cash & bank balances saved.')
+    alert(t('savedCashBank'))
   }
 
   const addAsset = async (e) => {
@@ -54,7 +56,7 @@ export default function OpeningBalances() {
   }
 
   const deleteAsset = async (id) => {
-    if (confirm('Delete this opening asset entry?')) await deleteDoc(doc(db, 'fixedAssetsOpening', id))
+    if (confirm(t('confirmDeleteOpeningAsset'))) await deleteDoc(doc(db, 'fixedAssetsOpening', id))
   }
 
   const startEditAsset = (a) => {
@@ -78,16 +80,16 @@ export default function OpeningBalances() {
   return (
     <div>
       <div className="card">
-        <h2>Opening Cash & Bank Balances</h2>
+        <h2>{t('openingCashBankTitle')}</h2>
         <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>
-          Used for the Cash Book and Bank Book running balances, and for the Balance Sheet.
+          {t('openingCashBankNote')}
         </p>
         <form onSubmit={saveCashBank}>
-          <label>Balance Sheet / As-of Date</label>
+          <label>{t('asOfDate')}</label>
           <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} />
           <div className="grid-2">
             <div>
-              <label>Opening Cash in Hand (LKR)</label>
+              <label>{t('openingCashInHand')}</label>
               <input
                 type="number"
                 value={cashBankForm.cash}
@@ -96,7 +98,7 @@ export default function OpeningBalances() {
               />
             </div>
             <div>
-              <label>Opening Bank Balance (LKR)</label>
+              <label>{t('openingBankBalanceLabel')}</label>
               <input
                 type="number"
                 value={cashBankForm.bank}
@@ -105,22 +107,21 @@ export default function OpeningBalances() {
               />
             </div>
           </div>
-          <button className="primary" type="submit">Save Cash & Bank Opening Balances</button>
+          <button className="primary" type="submit">{t('saveCashBankBtn')}</button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Opening Branch Balances (from last Balance Sheet)</h2>
+        <h2>{t('openingBranchBalancesTitle')}</h2>
         <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>
-          Enter the cash/bank balance held under each branch as of the date of your last balance sheet.
-          The Dashboard will add this to activity recorded in the app so branch balances stay accurate.
+          {t('openingBranchBalancesNote')}
         </p>
         <form onSubmit={saveFundBalances}>
-          <label>Balance Sheet / As-of Date</label>
+          <label>{t('asOfDate')}</label>
           <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} />
           {branches.map((b) => (
             <div key={b.id}>
-              <label>{b.name} — Opening Balance (LKR)</label>
+              <label>{b.name} — {t('openingBalanceLKR')}</label>
               <input
                 type="number"
                 value={balForm[b.id] ?? ''}
@@ -129,43 +130,42 @@ export default function OpeningBalances() {
               />
             </div>
           ))}
-          {branches.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>Add branches under Admin first.</p>}
-          <button className="primary" type="submit">Save Opening Balances</button>
+          {branches.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('addBranchesFirstNote')}</p>}
+          <button className="primary" type="submit">{t('saveOpeningBalancesBtn')}</button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Opening Fixed Assets (existing assets as per last Balance Sheet)</h2>
+        <h2>{t('openingFixedAssetsTitle')}</h2>
         <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>
-          List assets the trust already owns — land, building, vehicles, equipment — with the value shown
-          on the last balance sheet. These appear in the Fixed Assets register alongside new capital purchases.
+          {t('openingFixedAssetsNote')}
         </p>
         <form onSubmit={addAsset}>
-          <label>Asset Name</label>
+          <label>{t('assetName')}</label>
           <input value={assetForm.name} onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })} />
           <div className="grid-2">
             <div>
-              <label>Branch</label>
+              <label>{t('branch')}</label>
               <select value={assetForm.branchId} onChange={(e) => setAssetForm({ ...assetForm, branchId: e.target.value })}>
-                <option value="">-- Select --</option>
+                <option value="">{t('selectHead')}</option>
                 {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
             </div>
             <div>
-              <label>Value as per Balance Sheet (LKR)</label>
+              <label>{t('valueAsPerBS')}</label>
               <input type="number" value={assetForm.value} onChange={(e) => setAssetForm({ ...assetForm, value: e.target.value })} />
             </div>
           </div>
-          <label>Original Date Acquired (optional)</label>
+          <label>{t('originalDateAcquired')}</label>
           <input type="date" value={assetForm.dateAcquired} onChange={(e) => setAssetForm({ ...assetForm, dateAcquired: e.target.value })} />
-          <button className="primary" type="submit">Add Opening Asset</button>
+          <button className="primary" type="submit">{t('addOpeningAssetBtn')}</button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Opening Assets Recorded ({openingAssets.length})</h2>
+        <h2>{t('openingAssetsRecorded')} ({openingAssets.length})</h2>
         <table>
-          <thead><tr><th>Asset</th><th>Branch</th><th>Value</th><th>Acquired</th><th></th></tr></thead>
+          <thead><tr><th>{t('assetName')}</th><th>{t('branch')}</th><th>{t('amount')}</th><th>{t('acquired')}</th><th></th></tr></thead>
           <tbody>
             {openingAssets.map((a) => (
               <tr key={a.id}>
@@ -180,8 +180,8 @@ export default function OpeningBalances() {
                     <td><input type="number" value={editAssetForm.value} onChange={(e) => setEditAssetForm({ ...editAssetForm, value: e.target.value })} /></td>
                     <td><input type="date" value={editAssetForm.dateAcquired} onChange={(e) => setEditAssetForm({ ...editAssetForm, dateAcquired: e.target.value })} /></td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => saveAsset(a.id)}>Save</button>{' '}
-                      <button className="secondary small-btn" onClick={() => setEditingAssetId(null)}>Cancel</button>
+                      <button className="secondary small-btn" onClick={() => saveAsset(a.id)}>{t('save')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => setEditingAssetId(null)}>{t('cancel')}</button>
                     </td>
                   </>
                 ) : (
@@ -191,8 +191,8 @@ export default function OpeningBalances() {
                     <td>LKR {Number(a.value).toLocaleString()}</td>
                     <td>{a.dateAcquired || '—'}</td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => startEditAsset(a)}>Edit</button>{' '}
-                      <button className="secondary small-btn" onClick={() => deleteAsset(a.id)}>Delete</button>
+                      <button className="secondary small-btn" onClick={() => startEditAsset(a)}>{t('edit')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => deleteAsset(a.id)}>{t('delete')}</button>
                     </td>
                   </>
                 )}

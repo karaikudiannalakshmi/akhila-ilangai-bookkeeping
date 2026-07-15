@@ -3,8 +3,10 @@ import { useCollection } from '../hooks/useCollection'
 import PeriodFilter from './PeriodFilter'
 import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
 import { resolveBranchId } from '../utils/branch'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function Ledger() {
+  const { t } = useLanguage()
   const { data: vouchers } = useCollection('vouchers')
   const { data: branches } = useCollection('branches')
   const { data: openingCashBankData } = useCollection('openingCashBank')
@@ -29,48 +31,47 @@ export default function Ledger() {
 
   const particulars = (v) => {
     if (v.type === 'Contra') {
-      return v.contraDirection === 'CashToBank' ? 'Contra — Cash deposited into Bank' : 'Contra — Cash withdrawn from Bank'
+      return v.contraDirection === 'CashToBank' ? t('contraDepositedBank') : t('contraWithdrawnBank')
     }
     return v.headName
   }
 
   return (
     <div className="card">
-      <h2>All Entries (Consolidated View)</h2>
+      <h2>{t('allEntriesTitle')}</h2>
       <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>
-        Read-only. To add, edit, or delete an entry — including cash/bank contra transfers — use the
-        Cash Book or Bank Book. Changes made there appear here automatically.
+        {t('allEntriesReadOnlyNote')}
       </p>
-      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Period: {label} ({from} to {to})</p>
+      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>{t('period')}: {label} ({from} to {to})</p>
       <PeriodFilter vouchers={vouchers} openingDate={opening?.asOfDate} value={period} onChange={setPeriod} />
       <div className="filter-row">
         <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
-          <option value="all">All Branches</option>
+          <option value="all">{t('allBranches')}</option>
           {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-          <option value="all">All Types</option>
-          <option>Income</option>
-          <option>Expense</option>
-          <option>Contra</option>
+          <option value="all">{t('allTypes')}</option>
+          <option value="Income">{t('income')}</option>
+          <option value="Expense">{t('expense')}</option>
+          <option value="Contra">{t('contraEntry')}</option>
         </select>
       </div>
 
       <div className="summary-grid">
-        <div className="summary-box"><div className="value income">LKR {totalIncome.toLocaleString()}</div><div className="label">Total Income</div></div>
-        <div className="summary-box"><div className="value expense">LKR {totalExpense.toLocaleString()}</div><div className="label">Total Expense</div></div>
-        <div className="summary-box"><div className="value">LKR {(totalIncome - totalExpense).toLocaleString()}</div><div className="label">Net</div></div>
+        <div className="summary-box"><div className="value income">LKR {totalIncome.toLocaleString()}</div><div className="label">{t('totalIncome')}</div></div>
+        <div className="summary-box"><div className="value expense">LKR {totalExpense.toLocaleString()}</div><div className="label">{t('totalExpense')}</div></div>
+        <div className="summary-box"><div className="value">LKR {(totalIncome - totalExpense).toLocaleString()}</div><div className="label">{t('net')}</div></div>
       </div>
 
       <table>
-        <thead><tr><th>Date</th><th>Particulars</th><th>Branch</th><th>Mode</th><th>Amount</th></tr></thead>
+        <thead><tr><th>{t('date')}</th><th>{t('particulars')}</th><th>{t('branch')}</th><th>{t('mode')}</th><th>{t('amount')}</th></tr></thead>
         <tbody>
           {filtered.map((v) => (
             <tr key={v.id}>
               <td>{v.date}</td>
               <td>{particulars(v)}</td>
               <td>{branches.find((b) => b.id === resolveBranchId(v))?.name || v.branchName || v.locationName || '—'}</td>
-              <td>{v.type === 'Contra' ? 'Contra' : v.paymentMode}</td>
+              <td>{v.type === 'Contra' ? t('contraEntry') : v.paymentMode}</td>
               <td className={v.type === 'Income' ? 'income' : v.type === 'Expense' ? 'expense' : ''}>
                 {v.type === 'Income' ? '+' : v.type === 'Expense' ? '-' : ''}{v.amount.toLocaleString()}
               </td>
@@ -78,7 +79,7 @@ export default function Ledger() {
           ))}
         </tbody>
       </table>
-      {filtered.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No entries found for this filter.</p>}
+      {filtered.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noEntries')}</p>}
     </div>
   )
 }

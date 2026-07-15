@@ -5,8 +5,10 @@ import { useCollection } from '../hooks/useCollection'
 import { DEFAULT_HEADS } from '../constants/chartOfAccounts'
 import { BRANCH_SEED } from '../utils/branch'
 import { sortHeads } from '../utils/headSort'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function Admin() {
+  const { t } = useLanguage()
   const { data: heads } = useCollection('coa')
   const { data: properties } = useCollection('properties')
   const { data: branches } = useCollection('branches')
@@ -46,7 +48,7 @@ export default function Admin() {
   }
 
   const deleteBranch = async (id) => {
-    if (confirm('Delete this branch?')) await deleteDoc(doc(db, 'branches', id))
+    if (confirm(t('confirmDeleteBranch'))) await deleteDoc(doc(db, 'branches', id))
   }
 
   const startEditBranch = (b) => {
@@ -66,7 +68,7 @@ export default function Admin() {
       await addDoc(collection(db, 'coa'), { ...h, active: true })
     }
     setSeeding(false)
-    setMsg(`Loaded ${DEFAULT_HEADS.length} default heads.`)
+    setMsg(t('loadedHeadsMsg').replace('{count}', DEFAULT_HEADS.length))
   }
 
   const addHead = async (e) => {
@@ -81,7 +83,7 @@ export default function Admin() {
   }
 
   const deleteHead = async (id) => {
-    if (confirm('Delete this head? Existing vouchers using it will keep the old name in records.')) {
+    if (confirm(t('confirmDeleteHead'))) {
       await deleteDoc(doc(db, 'coa', id))
     }
   }
@@ -108,7 +110,7 @@ export default function Admin() {
   }
 
   const deleteProperty = async (id) => {
-    if (confirm('Delete this property?')) {
+    if (confirm(t('confirmDeleteProperty'))) {
       await deleteDoc(doc(db, 'properties', id))
     }
   }
@@ -137,27 +139,27 @@ export default function Admin() {
     <div>
       {branches.length === 0 && (
         <div className="card">
-          <h2>Get Started - Branches</h2>
-          <p style={{ fontSize: '0.85rem' }}>Load the standard set of branches for this organization.</p>
+          <h2>{t('getStartedBranches')}</h2>
+          <p style={{ fontSize: '0.85rem' }}>{t('loadDefaultBranchesNote')}</p>
           <button className="primary" onClick={seedBranches} disabled={seedingBranches}>
-            {seedingBranches ? 'Loading...' : `Load ${BRANCH_SEED.length} Default Branches`}
+            {seedingBranches ? t('loadingEllipsis') : t('loadDefaultBranchesBtn').replace('{count}', BRANCH_SEED.length)}
           </button>
         </div>
       )}
 
       <div className="card">
-        <h2>Add Branch</h2>
+        <h2>{t('addBranchTitle')}</h2>
         <form onSubmit={addBranch}>
-          <label>Branch Name</label>
+          <label>{t('branchName')}</label>
           <input value={newBranch} onChange={(e) => setNewBranch(e.target.value)} placeholder="e.g. Kilinochchi Training Centre" />
-          <button className="primary" type="submit">Add Branch</button>
+          <button className="primary" type="submit">{t('addBranchBtn')}</button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Branches ({branches.length})</h2>
+        <h2>{t('branchesTitle')} ({branches.length})</h2>
         <table>
-          <thead><tr><th>Name</th><th></th></tr></thead>
+          <thead><tr><th>{t('name')}</th><th></th></tr></thead>
           <tbody>
             {branches.map((b) => (
               <tr key={b.id} style={{ opacity: b.active === false ? 0.4 : 1 }}>
@@ -165,17 +167,17 @@ export default function Admin() {
                   <>
                     <td><input value={editBranchName} onChange={(e) => setEditBranchName(e.target.value)} /></td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => saveBranch(b.id)}>Save</button>{' '}
-                      <button className="secondary small-btn" onClick={() => setEditingBranchId(null)}>Cancel</button>
+                      <button className="secondary small-btn" onClick={() => saveBranch(b.id)}>{t('save')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => setEditingBranchId(null)}>{t('cancel')}</button>
                     </td>
                   </>
                 ) : (
                   <>
                     <td>{b.name}</td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => startEditBranch(b)}>Edit</button>{' '}
-                      <button className="secondary small-btn" onClick={() => toggleBranch(b)}>{b.active === false ? 'Enable' : 'Disable'}</button>{' '}
-                      <button className="secondary small-btn" onClick={() => deleteBranch(b.id)}>Delete</button>
+                      <button className="secondary small-btn" onClick={() => startEditBranch(b)}>{t('edit')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => toggleBranch(b)}>{b.active === false ? t('enable') : t('disable')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => deleteBranch(b.id)}>{t('delete')}</button>
                     </td>
                   </>
                 )}
@@ -187,50 +189,50 @@ export default function Admin() {
 
       {heads.length === 0 && (
         <div className="card">
-          <h2>Get Started - Heads</h2>
-          <p style={{ fontSize: '0.85rem' }}>No chart of accounts found yet. Load the standard set of income/expense heads for a temple + trust + rental property, mapped to your branches.</p>
+          <h2>{t('getStartedHeads')}</h2>
+          <p style={{ fontSize: '0.85rem' }}>{t('loadDefaultHeadsNote')}</p>
           <button className="primary" onClick={seedDefaults} disabled={seeding}>
-            {seeding ? 'Loading...' : `Load ${DEFAULT_HEADS.length} Default Heads`}
+            {seeding ? t('loadingEllipsis') : t('loadDefaultHeadsBtn').replace('{count}', DEFAULT_HEADS.length)}
           </button>
           {msg && <p style={{ color: 'var(--green)', fontSize: '0.8rem' }}>{msg}</p>}
         </div>
       )}
 
       <div className="card">
-        <h2>Add Income/Expense Head</h2>
+        <h2>{t('addHeadTitle')}</h2>
         <form onSubmit={addHead}>
-          <label>Head Name</label>
+          <label>{t('headName')}</label>
           <input value={newHead.name} onChange={(e) => setNewHead({ ...newHead, name: e.target.value })} />
           <div className="grid-2">
             <div>
-              <label>Type</label>
+              <label>{t('type')}</label>
               <select value={newHead.type} onChange={(e) => setNewHead({ ...newHead, type: e.target.value })}>
-                <option>Income</option>
-                <option>Expense</option>
+                <option value="Income">{t('income')}</option>
+                <option value="Expense">{t('expense')}</option>
               </select>
             </div>
             <div>
-              <label>Category</label>
+              <label>{t('category')}</label>
               <select value={newHead.category} onChange={(e) => setNewHead({ ...newHead, category: e.target.value })}>
-                <option>Revenue</option>
-                <option>Capital</option>
-                <option>Liability</option>
+                <option value="Revenue">{t('revenue')}</option>
+                <option value="Capital">{t('capital')}</option>
+                <option value="Liability">{t('liability')}</option>
               </select>
             </div>
           </div>
-          <button className="primary" type="submit">Add Head</button>
+          <button className="primary" type="submit">{t('addHeadBtn')}</button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Existing Heads ({heads.length})</h2>
+        <h2>{t('existingHeadsTitle')} ({heads.length})</h2>
         <table>
           <thead>
-            <tr><th>Name</th><th>Type</th><th>Category</th><th></th></tr>
+            <tr><th>{t('name')}</th><th>{t('type')}</th><th>{t('category')}</th><th></th></tr>
           </thead>
           <tbody>
             {sortHeads(heads).map((h, i, arr) => {
-              const labelFor = (head) => head.category === 'Liability' ? 'Liabilities' : head.category === 'Capital' ? 'Assets' : head.type === 'Income' ? 'Income' : 'Expenses'
+              const labelFor = (head) => head.category === 'Liability' ? t('groupLiabilities') : head.category === 'Capital' ? t('groupAssets') : head.type === 'Income' ? t('groupIncome') : t('groupExpenses')
               const groupLabel = labelFor(h)
               const prevGroupLabel = i > 0 ? labelFor(arr[i - 1]) : null
               const showDivider = groupLabel !== prevGroupLabel
@@ -247,31 +249,31 @@ export default function Admin() {
                     <td><input value={editHeadForm.name} onChange={(e) => setEditHeadForm({ ...editHeadForm, name: e.target.value })} /></td>
                     <td>
                       <select value={editHeadForm.type} onChange={(e) => setEditHeadForm({ ...editHeadForm, type: e.target.value })}>
-                        <option>Income</option>
-                        <option>Expense</option>
+                        <option value="Income">{t('income')}</option>
+                        <option value="Expense">{t('expense')}</option>
                       </select>
                     </td>
                     <td>
                       <select value={editHeadForm.category} onChange={(e) => setEditHeadForm({ ...editHeadForm, category: e.target.value })}>
-                        <option>Revenue</option>
-                        <option>Capital</option>
-                        <option>Liability</option>
+                        <option value="Revenue">{t('revenue')}</option>
+                        <option value="Capital">{t('capital')}</option>
+                        <option value="Liability">{t('liability')}</option>
                       </select>
                     </td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => saveHead(h.id)}>Save</button>{' '}
-                      <button className="secondary small-btn" onClick={() => setEditingHeadId(null)}>Cancel</button>
+                      <button className="secondary small-btn" onClick={() => saveHead(h.id)}>{t('save')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => setEditingHeadId(null)}>{t('cancel')}</button>
                     </td>
                   </>
                 ) : (
                   <>
                     <td>{h.name}</td>
-                    <td className={h.type === 'Income' ? 'income' : 'expense'}>{h.type}</td>
-                    <td>{h.category}</td>
+                    <td className={h.type === 'Income' ? 'income' : 'expense'}>{h.type === 'Income' ? t('income') : t('expense')}</td>
+                    <td>{h.category === 'Revenue' ? t('revenue') : h.category === 'Capital' ? t('capital') : h.category === 'Liability' ? t('liability') : h.category}</td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => startEditHead(h)}>Edit</button>{' '}
-                      <button className="secondary small-btn" onClick={() => toggleHead(h)}>{h.active === false ? 'Enable' : 'Disable'}</button>{' '}
-                      <button className="secondary small-btn" onClick={() => deleteHead(h.id)}>Delete</button>
+                      <button className="secondary small-btn" onClick={() => startEditHead(h)}>{t('edit')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => toggleHead(h)}>{h.active === false ? t('enable') : t('disable')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => deleteHead(h.id)}>{t('delete')}</button>
                     </td>
                   </>
                 )}
@@ -284,51 +286,51 @@ export default function Admin() {
       </div>
 
       <div className="card">
-        <h2>Add Rental Property</h2>
+        <h2>{t('addRentalPropertyTitle')}</h2>
         <form onSubmit={addProperty}>
-          <label>Property Name</label>
+          <label>{t('propertyName')}</label>
           <input value={newProperty.name} onChange={(e) => setNewProperty({ ...newProperty, name: e.target.value })} />
-          <label>Address</label>
+          <label>{t('address')}</label>
           <input value={newProperty.address} onChange={(e) => setNewProperty({ ...newProperty, address: e.target.value })} />
           <div className="grid-2">
             <div>
-              <label>Tenant Name</label>
+              <label>{t('tenantName')}</label>
               <input value={newProperty.tenantName} onChange={(e) => setNewProperty({ ...newProperty, tenantName: e.target.value })} />
             </div>
             <div>
-              <label>Tenant Contact</label>
+              <label>{t('tenantContact')}</label>
               <input value={newProperty.tenantContact} onChange={(e) => setNewProperty({ ...newProperty, tenantContact: e.target.value })} />
             </div>
           </div>
-          <label>Monthly Rent (LKR)</label>
+          <label>{t('monthlyRent')}</label>
           <input type="number" value={newProperty.monthlyRent} onChange={(e) => setNewProperty({ ...newProperty, monthlyRent: e.target.value })} />
-          <button className="primary" type="submit">Add Property</button>
+          <button className="primary" type="submit">{t('addPropertyBtn')}</button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Properties ({properties.length})</h2>
+        <h2>{t('propertiesTitle')} ({properties.length})</h2>
         <table>
-          <thead><tr><th>Name</th><th>Tenant</th><th>Monthly Rent</th><th></th></tr></thead>
+          <thead><tr><th>{t('name')}</th><th>{t('tenant')}</th><th>{t('monthlyRent')}</th><th></th></tr></thead>
           <tbody>
             {properties.map((p) => (
               <tr key={p.id}>
                 {editingPropertyId === p.id ? (
                   <>
                     <td>
-                      <input style={{ marginBottom: 4 }} value={editPropertyForm.name} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, name: e.target.value })} placeholder="Name" />
-                      <input value={editPropertyForm.address} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, address: e.target.value })} placeholder="Address" />
+                      <input style={{ marginBottom: 4 }} value={editPropertyForm.name} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, name: e.target.value })} placeholder={t('name')} />
+                      <input value={editPropertyForm.address} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, address: e.target.value })} placeholder={t('address')} />
                     </td>
                     <td>
-                      <input style={{ marginBottom: 4 }} value={editPropertyForm.tenantName} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, tenantName: e.target.value })} placeholder="Tenant Name" />
-                      <input value={editPropertyForm.tenantContact} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, tenantContact: e.target.value })} placeholder="Tenant Contact" />
+                      <input style={{ marginBottom: 4 }} value={editPropertyForm.tenantName} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, tenantName: e.target.value })} placeholder={t('tenantName')} />
+                      <input value={editPropertyForm.tenantContact} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, tenantContact: e.target.value })} placeholder={t('tenantContact')} />
                     </td>
                     <td>
                       <input type="number" value={editPropertyForm.monthlyRent} onChange={(e) => setEditPropertyForm({ ...editPropertyForm, monthlyRent: e.target.value })} />
                     </td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => saveProperty(p.id)}>Save</button>{' '}
-                      <button className="secondary small-btn" onClick={() => setEditingPropertyId(null)}>Cancel</button>
+                      <button className="secondary small-btn" onClick={() => saveProperty(p.id)}>{t('save')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => setEditingPropertyId(null)}>{t('cancel')}</button>
                     </td>
                   </>
                 ) : (
@@ -337,8 +339,8 @@ export default function Admin() {
                     <td>{p.tenantName}</td>
                     <td>LKR {Number(p.monthlyRent).toLocaleString()}</td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => startEditProperty(p)}>Edit</button>{' '}
-                      <button className="secondary small-btn" onClick={() => deleteProperty(p.id)}>Delete</button>
+                      <button className="secondary small-btn" onClick={() => startEditProperty(p)}>{t('edit')}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => deleteProperty(p.id)}>{t('delete')}</button>
                     </td>
                   </>
                 )}

@@ -3,8 +3,10 @@ import { useCollection } from '../hooks/useCollection'
 import PeriodFilter from './PeriodFilter'
 import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
 import { resolveBranchId } from '../utils/branch'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function TrialBalance() {
+  const { t } = useLanguage()
   const { data: vouchers } = useCollection('vouchers')
   const { data: branches } = useCollection('branches')
   const { data: openingCashBankData } = useCollection('openingCashBank')
@@ -76,19 +78,19 @@ export default function TrialBalance() {
   return (
     <div>
       <div className="card">
-        <h2>Income & Expenditure Account</h2>
-        <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Period: {label} ({from} to {to})</p>
+        <h2>{t('incomeExpenditureTitle')}</h2>
+        <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>{t('period')}: {label} ({from} to {to})</p>
         <PeriodFilter vouchers={vouchers} openingDate={opening?.asOfDate} value={period} onChange={setPeriod} />
         <div className="filter-row">
           <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
-            <option value="all">All Branches (Consolidated)</option>
+            <option value="all">{t('allBranchesConsolidated')}</option>
             {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
         </div>
 
-        <h3 style={{ fontSize: '0.85rem', color: 'var(--green)' }}>Income</h3>
+        <h3 style={{ fontSize: '0.85rem', color: 'var(--green)' }}>{t('income')}</h3>
         <table>
-          <thead><tr><th>Head</th><th>Amount</th></tr></thead>
+          <thead><tr><th>{t('head')}</th><th>{t('amount')}</th></tr></thead>
           <tbody>
             {incomeRows.map((r) => (
               <tr key={r.head}>
@@ -98,14 +100,14 @@ export default function TrialBalance() {
             ))}
           </tbody>
           <tfoot>
-            <tr style={{ fontWeight: 700 }}><td>Total Income</td><td className="income">{totalIncome.toLocaleString()}</td></tr>
+            <tr style={{ fontWeight: 700 }}><td>{t('totalIncomeLabel')}</td><td className="income">{totalIncome.toLocaleString()}</td></tr>
           </tfoot>
         </table>
-        {incomeRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No income entries in this period.</p>}
+        {incomeRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noIncomeThisPeriod')}</p>}
 
-        <h3 style={{ fontSize: '0.85rem', color: 'var(--red)', marginTop: 16 }}>Expenditure</h3>
+        <h3 style={{ fontSize: '0.85rem', color: 'var(--red)', marginTop: 16 }}>{t('expenditure')}</h3>
         <table>
-          <thead><tr><th>Head</th><th>Amount</th></tr></thead>
+          <thead><tr><th>{t('head')}</th><th>{t('amount')}</th></tr></thead>
           <tbody>
             {expenseRevenueRows.map((r) => (
               <tr key={r.head}>
@@ -115,36 +117,36 @@ export default function TrialBalance() {
             ))}
           </tbody>
           <tfoot>
-            <tr style={{ fontWeight: 700 }}><td>Total Expenditure</td><td className="expense">{totalExpense.toLocaleString()}</td></tr>
+            <tr style={{ fontWeight: 700 }}><td>{t('totalExpenditureLabel')}</td><td className="expense">{totalExpense.toLocaleString()}</td></tr>
           </tfoot>
         </table>
-        {expenseRevenueRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No expenditure entries in this period.</p>}
+        {expenseRevenueRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noExpenditureThisPeriod')}</p>}
 
         <table style={{ marginTop: 16 }}>
           <tbody>
             <tr style={{ fontWeight: 700 }}>
-              <td>Net Surplus / (Deficit)</td>
+              <td>{t('netSurplus')}</td>
               <td>LKR {(totalIncome - totalExpense).toLocaleString()}</td>
             </tr>
           </tbody>
         </table>
         <p style={{ fontSize: '0.75rem', color: '#6b6258', marginTop: 10 }}>
-          Note: Capital expenditure is excluded here and tracked separately under Fixed Assets.
+          {t('capitalExcludedNote')}
         </p>
       </div>
 
       <div className="card">
-        <h2>Branch-wise Comparison ({label})</h2>
-        <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Every branch shown side by side, with a consolidated Total column — independent of the filter above.</p>
+        <h2>{t('branchWiseComparison')} ({label})</h2>
+        <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>{t('branchWiseComparisonNote')}</p>
 
-        <h3 style={{ fontSize: '0.85rem', color: 'var(--green)' }}>Income</h3>
+        <h3 style={{ fontSize: '0.85rem', color: 'var(--green)' }}>{t('income')}</h3>
         <div style={{ overflowX: 'auto' }}>
           <table>
             <thead>
               <tr>
-                <th>Head</th>
+                <th>{t('head')}</th>
                 {branches.map((b) => <th key={b.id}>{b.name}</th>)}
-                <th>Total</th>
+                <th>{t('total')}</th>
               </tr>
             </thead>
             <tbody>
@@ -158,23 +160,23 @@ export default function TrialBalance() {
             </tbody>
             <tfoot>
               <tr style={{ fontWeight: 700 }}>
-                <td>Total Income</td>
+                <td>{t('totalIncomeRow')}</td>
                 {branches.map((b) => <td key={b.id}>{matrix.incomeTotals[b.id]?.toLocaleString() || 0}</td>)}
                 <td>{matrix.incomeTotals.total?.toLocaleString() || 0}</td>
               </tr>
             </tfoot>
           </table>
         </div>
-        {matrix.incomeRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No income entries in this period.</p>}
+        {matrix.incomeRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noIncomeThisPeriod')}</p>}
 
-        <h3 style={{ fontSize: '0.85rem', color: 'var(--red)', marginTop: 16 }}>Expenditure</h3>
+        <h3 style={{ fontSize: '0.85rem', color: 'var(--red)', marginTop: 16 }}>{t('expenditure')}</h3>
         <div style={{ overflowX: 'auto' }}>
           <table>
             <thead>
               <tr>
-                <th>Head</th>
+                <th>{t('head')}</th>
                 {branches.map((b) => <th key={b.id}>{b.name}</th>)}
-                <th>Total</th>
+                <th>{t('total')}</th>
               </tr>
             </thead>
             <tbody>
@@ -188,26 +190,26 @@ export default function TrialBalance() {
             </tbody>
             <tfoot>
               <tr style={{ fontWeight: 700 }}>
-                <td>Total Expenditure</td>
+                <td>{t('totalExpenditureRow')}</td>
                 {branches.map((b) => <td key={b.id}>{matrix.expenseTotals[b.id]?.toLocaleString() || 0}</td>)}
                 <td>{matrix.expenseTotals.total?.toLocaleString() || 0}</td>
               </tr>
             </tfoot>
           </table>
         </div>
-        {matrix.expenseRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No expenditure entries in this period.</p>}
+        {matrix.expenseRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noExpenditureThisPeriod')}</p>}
 
         <table style={{ marginTop: 16 }}>
           <thead>
             <tr>
-              <th>Net Surplus / (Deficit)</th>
+              <th>{t('netSurplus')}</th>
               {branches.map((b) => <th key={b.id}>{b.name}</th>)}
-              <th>Total</th>
+              <th>{t('total')}</th>
             </tr>
           </thead>
           <tbody>
             <tr style={{ fontWeight: 700 }}>
-              <td>Net</td>
+              <td>{t('netRow')}</td>
               {branches.map((b) => {
                 const net = (matrix.incomeTotals[b.id] || 0) - (matrix.expenseTotals[b.id] || 0)
                 return <td key={b.id} className={net >= 0 ? 'income' : 'expense'}>{net.toLocaleString()}</td>

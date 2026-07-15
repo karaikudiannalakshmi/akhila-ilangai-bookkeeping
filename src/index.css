@@ -6,7 +6,7 @@
   --line: #e4dccb;
   --green: #2e7d32;
   --red: #b3261e;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Segoe UI', 'Noto Sans Tamil', system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -168,6 +168,7 @@ th { color: #6b6258; font-weight: 600; font-size: 0.75rem; text-transform: upper
 .summary-box .label { font-size: 0.7rem; color: #6b6258; margin-top: 2px; }
 
 .login-screen {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;

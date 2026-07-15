@@ -3,10 +3,16 @@ import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/fi
 import { db } from '../firebase'
 import { PAYMENT_MODES } from '../constants/chartOfAccounts'
 import { sortHeads } from '../utils/headSort'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
-const CLASSIFICATIONS = ['Income', 'Expenses', 'Assets', 'Liabilities']
+const CLASSIFICATIONS = [
+  ['Income', 'income'],
+  ['Expenses', 'expenses'],
+  ['Assets', 'assets'],
+  ['Liabilities', 'liabilities'],
+]
 
 function classifyHead(h) {
   if (h.category === 'Liability') return 'Liabilities'
@@ -16,6 +22,7 @@ function classifyHead(h) {
 }
 
 export default function VoucherFormModal({ mode, voucher, allowedModes, heads, properties, branches, onClose }) {
+  const { t, lang } = useLanguage()
   const isEdit = mode === 'edit'
   const initialHead = heads.find((h) => h.id === voucher?.headId)
 
@@ -69,52 +76,52 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
   return (
     <div style={overlayStyle}>
       <div style={modalStyle} className="card">
-        <h2>{isEdit ? 'Edit Entry' : 'New Entry'}</h2>
+        <h2>{isEdit ? t('editEntry') : t('newEntry')}</h2>
         <form onSubmit={handleSave}>
           <div className="grid-2">
             <div>
-              <label>Date</label>
+              <label>{t('date')}</label>
               <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div>
-              <label>Classification</label>
+              <label>{t('classification')}</label>
               <select value={form.classification} onChange={(e) => setForm({ ...form, classification: e.target.value, headId: '' })}>
-                {CLASSIFICATIONS.map((c) => <option key={c}>{c}</option>)}
+                {CLASSIFICATIONS.map(([value, key]) => <option key={value} value={value}>{t(key)}</option>)}
               </select>
             </div>
           </div>
 
-          <label>Branch</label>
+          <label>{t('branch')}</label>
           <select required value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })}>
-            <option value="">-- Select Branch --</option>
+            <option value="">{t('selectBranch')}</option>
             {branches.filter((b) => b.active !== false).map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
 
-          <label>Head</label>
+          <label>{t('head')}</label>
           <select value={form.headId} onChange={(e) => setForm({ ...form, headId: e.target.value })}>
-            <option value="">-- Select --</option>
+            <option value="">{t('selectHead')}</option>
             {activeHeads.map((h) => (
-              <option key={h.id} value={h.id}>{h.name} {h.type === 'Income' ? '(In)' : '(Out)'}</option>
+              <option key={h.id} value={h.id}>{h.name} {h.type === 'Income' ? t('inLabel') : t('outLabel')}</option>
             ))}
           </select>
           {form.classification === 'Liabilities' && activeHeads.length > 0 && (
             <p style={{ fontSize: '0.75rem', color: '#6b6258', marginTop: 4 }}>
-              (In) = liability received, e.g. a loan taken. (Out) = liability repaid, e.g. a loan installment.
+              {t('liabilityInOutNote')}
             </p>
           )}
           {activeHeads.length === 0 && (
             <p style={{ fontSize: '0.8rem', color: 'var(--red)', marginTop: 4 }}>
-              No {form.classification.toLowerCase()} heads set up yet — add one under Admin.
+              {t('noHeadsForClassification').replace('{classification}', t(form.classification.toLowerCase()).toLowerCase())}
             </p>
           )}
 
           {isRentHead && (
             <>
-              <label>Property</label>
+              <label>{t('property')}</label>
               <select value={form.propertyId} onChange={(e) => setForm({ ...form, propertyId: e.target.value })}>
-                <option value="">-- Select Property --</option>
+                <option value="">{t('selectProperty')}</option>
                 {properties.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.tenantName})</option>)}
               </select>
             </>
@@ -122,11 +129,11 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
 
           <div className="grid-2">
             <div>
-              <label>Amount (LKR)</label>
+              <label>{t('amount')}</label>
               <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             </div>
             <div>
-              <label>Payment Mode</label>
+              <label>{t('paymentMode')}</label>
               {allowedModes.length > 1 ? (
                 <select value={form.paymentMode} onChange={(e) => setForm({ ...form, paymentMode: e.target.value })}>
                   {allowedModes.map((m) => <option key={m}>{m}</option>)}
@@ -137,12 +144,12 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
             </div>
           </div>
 
-          <label>Narration / Remarks</label>
+          <label>{t('narration')}</label>
           <textarea rows="2" value={form.narration} onChange={(e) => setForm({ ...form, narration: e.target.value })} />
 
           <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-            <button className="primary" type="submit" disabled={saving}>{saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Entry'}</button>
-            <button className="secondary" type="button" onClick={onClose}>Cancel</button>
+            <button className="primary" type="submit" disabled={saving}>{saving ? t('saving') : isEdit ? t('saveChanges') : t('addEntry')}</button>
+            <button className="secondary" type="button" onClick={onClose}>{t('cancel')}</button>
           </div>
         </form>
       </div>

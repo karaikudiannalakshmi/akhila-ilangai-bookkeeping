@@ -4,8 +4,10 @@ import PeriodFilter from './PeriodFilter'
 import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
 import { resolveBranchId } from '../utils/branch'
 import { sortHeads } from '../utils/headSort'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export default function GeneralLedger() {
+  const { t } = useLanguage()
   const { data: vouchers } = useCollection('vouchers')
   const { data: heads } = useCollection('coa')
   const { data: branches } = useCollection('branches')
@@ -42,41 +44,41 @@ export default function GeneralLedger() {
 
   return (
     <div className="card">
-      <h2>Ledgers (Head-wise Account)</h2>
-      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Period: {label} ({from} to {to})</p>
+      <h2>{t('ledgersTitle')}</h2>
+      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>{t('period')}: {label} ({from} to {to})</p>
       <div className="filter-row">
         <select value={headId} onChange={(e) => setHeadId(e.target.value)}>
-          <option value="">-- Select a Head --</option>
+          <option value="">{t('selectHead')}</option>
           {incomeHeads.length > 0 && (
-            <optgroup label="Income">
+            <optgroup label={t('income')}>
               {incomeHeads.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
             </optgroup>
           )}
           {expenseHeads.length > 0 && (
-            <optgroup label="Expense">
-              {expenseHeads.map((h) => <option key={h.id} value={h.id}>{h.name} {h.category === 'Capital' ? '(Capital)' : ''}</option>)}
+            <optgroup label={t('expense')}>
+              {expenseHeads.map((h) => <option key={h.id} value={h.id}>{h.name} {h.category === 'Capital' ? `(${t('capital')})` : ''}</option>)}
             </optgroup>
           )}
         </select>
         <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
-          <option value="all">All Branches</option>
+          <option value="all">{t('allBranches')}</option>
           {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
       <PeriodFilter vouchers={vouchers} openingDate={opening?.asOfDate} value={period} onChange={setPeriod} />
 
-      {!headId && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>Select a head above to view its ledger account.</p>}
+      {!headId && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('selectHeadPrompt')}</p>}
 
       {headId && (
         <>
           <div className="summary-grid">
             <div className="summary-box">
               <div className={`value ${selectedHead?.type === 'Income' ? 'income' : 'expense'}`}>LKR {total.toLocaleString()}</div>
-              <div className="label">Total {selectedHead?.type === 'Income' ? '(Cr)' : '(Dr)'}</div>
+              <div className="label">{selectedHead?.type === 'Income' ? t('totalCr') : t('totalDr')}</div>
             </div>
           </div>
           <table>
-            <thead><tr><th>Date</th><th>Branch</th><th>Narration</th><th>Amount</th><th>Running Total</th></tr></thead>
+            <thead><tr><th>{t('date')}</th><th>{t('branch')}</th><th>{t('narrationCol')}</th><th>{t('amount')}</th><th>{t('runningTotal')}</th></tr></thead>
             <tbody>
               {rows.map((v) => (
                 <tr key={v.id}>
@@ -89,7 +91,7 @@ export default function GeneralLedger() {
               ))}
             </tbody>
           </table>
-          {rows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No entries for this head in the selected period.</p>}
+          {rows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>{t('noEntriesForHeadPeriod')}</p>}
         </>
       )}
     </div>

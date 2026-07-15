@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
 export default function ContraFormModal({ mode, voucher, branches, onClose }) {
+  const { t } = useLanguage()
   const isEdit = mode === 'edit'
 
   const [form, setForm] = useState({
@@ -42,43 +44,42 @@ export default function ContraFormModal({ mode, voucher, branches, onClose }) {
   return (
     <div style={overlayStyle}>
       <div style={modalStyle} className="card">
-        <h2>{isEdit ? 'Edit Contra Entry' : 'New Contra Entry'}</h2>
+        <h2>{isEdit ? t('editContraEntry') : t('newContraEntry')}</h2>
         <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>
-          For moving money between cash and bank — a cash withdrawal from the bank, or a cash deposit
-          into the bank. This is not income or expense, and appears in both the Cash Book and Bank Book.
+          {t('contraExplain')}
         </p>
         <form onSubmit={handleSave}>
-          <label>Direction</label>
+          <label>{t('direction')}</label>
           <select value={form.contraDirection} onChange={(e) => setForm({ ...form, contraDirection: e.target.value })}>
-            <option value="CashToBank">Cash deposited into Bank</option>
-            <option value="BankToCash">Cash withdrawn from Bank</option>
+            <option value="CashToBank">{t('cashDepositedIntoBank')}</option>
+            <option value="BankToCash">{t('cashWithdrawnFromBank')}</option>
           </select>
 
           <div className="grid-2">
             <div>
-              <label>Date</label>
+              <label>{t('date')}</label>
               <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div>
-              <label>Amount (LKR)</label>
+              <label>{t('amount')}</label>
               <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             </div>
           </div>
 
-          <label>Branch</label>
+          <label>{t('branch')}</label>
           <select required value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })}>
-            <option value="">-- Select Branch --</option>
+            <option value="">{t('selectBranch')}</option>
             {branches.filter((b) => b.active !== false).map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
 
-          <label>Narration / Remarks</label>
+          <label>{t('narration')}</label>
           <textarea rows="2" value={form.narration} onChange={(e) => setForm({ ...form, narration: e.target.value })} />
 
           <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-            <button className="primary" type="submit" disabled={saving}>{saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Contra Entry'}</button>
-            <button className="secondary" type="button" onClick={onClose}>Cancel</button>
+            <button className="primary" type="submit" disabled={saving}>{saving ? t('saving') : isEdit ? t('saveChanges') : t('addContraEntry')}</button>
+            <button className="secondary" type="button" onClick={onClose}>{t('cancel')}</button>
           </div>
         </form>
       </div>

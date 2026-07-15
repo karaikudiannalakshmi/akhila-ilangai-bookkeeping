@@ -13,25 +13,27 @@ import RentCollection from './components/RentCollection'
 import FixedAssets from './components/FixedAssets'
 import Admin from './components/Admin'
 import OpeningBalances from './components/OpeningBalances'
+import { useLanguage } from './i18n/LanguageContext'
 
-const TABS = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'cashbook', label: 'Cash Book' },
-  { id: 'bankbook', label: 'Bank Book' },
-  { id: 'ledger', label: 'All Entries' },
-  { id: 'genledger', label: 'Ledgers' },
-  { id: 'trial', label: 'Income & Expenditure' },
-  { id: 'balancesheet', label: 'Balance Sheet' },
-  { id: 'analysis', label: 'Expenditure Analysis' },
-  { id: 'rent', label: 'Rent Collection' },
-  { id: 'assets', label: 'Fixed Assets' },
-  { id: 'opening', label: 'Opening Balances' },
-  { id: 'admin', label: 'Admin' },
+const TAB_IDS = [
+  ['dashboard', 'tab_dashboard'],
+  ['cashbook', 'tab_cashbook'],
+  ['bankbook', 'tab_bankbook'],
+  ['ledger', 'tab_ledger'],
+  ['genledger', 'tab_genledger'],
+  ['trial', 'tab_trial'],
+  ['balancesheet', 'tab_balancesheet'],
+  ['analysis', 'tab_analysis'],
+  ['rent', 'tab_rent'],
+  ['assets', 'tab_assets'],
+  ['opening', 'tab_opening'],
+  ['admin', 'tab_admin'],
 ]
 
 export default function App() {
   const [authed, setAuthed] = useState(false)
   const [tab, setTab] = useState('dashboard')
+  const { lang, toggleLang, t } = useLanguage()
 
   useEffect(() => {
     if (sessionStorage.getItem('akk_auth') === 'true') setAuthed(true)
@@ -44,21 +46,34 @@ export default function App() {
       <div className="app-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src={logo} alt="Kamban Lanka" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-          <h1>Akhila Ilangai Kamban Kazhakam</h1>
+          <div>
+            <h1>Akhila Ilangai Kamban Kazhakam</h1>
+            <div className="sub" style={{ fontSize: '0.7rem' }}>{t('orgSubtitle')}</div>
+          </div>
         </div>
-        <button
-          className="secondary"
-          style={{ background: 'transparent', color: 'white', borderColor: 'white' }}
-          onClick={() => { sessionStorage.removeItem('akk_auth'); setAuthed(false) }}
-        >
-          Logout
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            className="secondary"
+            style={{ background: 'transparent', color: 'white', borderColor: 'white', fontWeight: lang === 'en' ? 700 : 400 }}
+            onClick={toggleLang}
+            title="Switch language / மொழியை மாற்று"
+          >
+            {lang === 'en' ? 'த' : 'EN'}
+          </button>
+          <button
+            className="secondary"
+            style={{ background: 'transparent', color: 'white', borderColor: 'white' }}
+            onClick={() => { sessionStorage.removeItem('akk_auth'); setAuthed(false) }}
+          >
+            {t('logout')}
+          </button>
+        </div>
       </div>
 
       <div className="tabs">
-        {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
-            {t.label}
+        {TAB_IDS.map(([id, key]) => (
+          <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
+            {t(key)}
           </button>
         ))}
       </div>
