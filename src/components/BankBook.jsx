@@ -4,7 +4,9 @@ import { db } from '../firebase'
 import { useCollection } from '../hooks/useCollection'
 import VoucherFormModal from './VoucherFormModal'
 import ContraFormModal from './ContraFormModal'
+import PeriodFilter from './PeriodFilter'
 import { bankDelta, isBankBookEntry } from '../utils/cashBank'
+import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
 
 const BANK_MODES = ['Cheque', 'Bank Transfer', 'Online']
 
@@ -13,38 +15,43 @@ export default function BankBook() {
   const { data: openingCashBankData } = useCollection('openingCashBank')
   const { data: heads } = useCollection('coa')
   const { data: properties } = useCollection('properties')
-  const { data: locations } = useCollection('locations')
-  const opening = openingCashBankData.find((d) => d.id === 'main')
+  const { data: branches } = useCollection('branches')
+  const openingRecord = openingCashBankData.find((d) => d.id === 'main')
+  const baseOpeningBank = openingRecord?.bank || 0
+  const baseOpeningDate = openingRecord?.asOfDate || ''
 
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  const [period, setPeriod] = useState(defaultPeriodValue())
   const [showAdd, setShowAdd] = useState(false)
   const [showContra, setShowContra] = useState(false)
   const [editing, setEditing] = useState(null)
   const [editingContra, setEditingContra] = useState(null)
 
-  const openingBank = opening?.bank || 0
-  const openingDate = opening?.asOfDate || ''
+  const { from, to, label } = resolvePeriod(period)
+
+  const bankEntries = useMemo(
+    () => vouchers.filter(isBankBookEntry).filter((v) => !baseOpeningDate || v.date >= baseOpeningDate),
+    [vouchers, baseOpeningDate]
+  )
+
+  const openingForPeriod = useMemo(() => {
+    return baseOpeningBank + bankEntries.filter((v) => v.date < from).reduce((s, v) => s + bankDelta(v), 0)
+  }, [bankEntries, baseOpeningBank, from])
 
   const rows = useMemo(() => {
-    const bankVouchers = vouchers
-      .filter(isBankBookEntry)
-      .filter((v) => !openingDate || v.date >= openingDate)
+    const inPeriod = bankEntries
+      .filter((v) => v.date >= from && v.date <= to)
       .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
 
-    let balance = openingBank
-    const withBalance = bankVouchers.map((v) => {
+    let balance = openingForPeriod
+    return inPeriod.map((v) => {
       balance += bankDelta(v)
       return { ...v, balance, delta: bankDelta(v) }
     })
-    return withBalance
-      .filter((v) => !from || v.date >= from)
-      .filter((v) => !to || v.date <= to)
-  }, [vouchers, openingBank, openingDate, from, to])
+  }, [bankEntries, from, to, openingForPeriod])
 
   const totalReceipts = rows.filter((v) => v.delta > 0).reduce((s, v) => s + v.delta, 0)
   const totalPayments = rows.filter((v) => v.delta < 0).reduce((s, v) => s - v.delta, 0)
-  const closingBalance = rows.length > 0 ? rows[rows.length - 1].balance : openingBank
+  const closingBalance = openingForPeriod + rows.reduce((s, v) => s + v.delta, 0)
 
   const handleDelete = async (id) => {
     if (confirm('Delete this entry? This cannot be undone.')) await deleteDoc(doc(db, 'vouchers', id))
@@ -60,16 +67,14 @@ export default function BankBook() {
   return (
     <div className="card">
       <h2>Bank Book</h2>
-      {!opening && (
+      {!openingRecord && (
         <p style={{ fontSize: '0.8rem', color: 'var(--red)' }}>
           No opening bank balance set yet — set it under Opening Balances for an accurate running balance.
         </p>
       )}
+      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Period: {label} ({from} to {to})</p>
       <div className="filter-row" style={{ justifyContent: 'space-between' }}>
-        <div className="filter-row" style={{ margin: 0 }}>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </div>
+        <PeriodFilter vouchers={vouchers} openingDate={baseOpeningDate} value={period} onChange={setPeriod} />
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="secondary" onClick={() => setShowContra(true)}>Contra Entry</button>
           <button className="primary" style={{ marginTop: 0 }} onClick={() => setShowAdd(true)}>+ New Bank Entry</button>
@@ -77,7 +82,7 @@ export default function BankBook() {
       </div>
 
       <div className="summary-grid">
-        <div className="summary-box"><div className="value">LKR {openingBank.toLocaleString()}</div><div className="label">Opening Bank</div></div>
+        <div className="summary-box"><div className="value">LKR {openingForPeriod.toLocaleString()}</div><div className="label">Opening (Carried Forward)</div></div>
         <div className="summary-box"><div className="value income">LKR {totalReceipts.toLocaleString()}</div><div className="label">Receipts</div></div>
         <div className="summary-box"><div className="value expense">LKR {totalPayments.toLocaleString()}</div><div className="label">Payments</div></div>
         <div className="summary-box"><div className="value">LKR {closingBalance.toLocaleString()}</div><div className="label">Closing Bank</div></div>
@@ -87,10 +92,10 @@ export default function BankBook() {
         <thead><tr><th>Date</th><th>Particulars</th><th>Mode</th><th>Receipts</th><th>Payments</th><th>Balance</th><th></th></tr></thead>
         <tbody>
           <tr>
-            <td>{openingDate || '—'}</td>
-            <td style={{ fontWeight: 600 }}>Opening Balance</td>
+            <td>{from}</td>
+            <td style={{ fontWeight: 600 }}>Opening Balance (b/f)</td>
             <td></td><td></td><td></td>
-            <td style={{ fontWeight: 600 }}>{openingBank.toLocaleString()}</td>
+            <td style={{ fontWeight: 600 }}>{openingForPeriod.toLocaleString()}</td>
             <td></td>
           </tr>
           {rows.map((v) => (
@@ -117,7 +122,7 @@ export default function BankBook() {
           allowedModes={BANK_MODES}
           heads={heads}
           properties={properties}
-          locations={locations}
+          branches={branches}
           onClose={() => setShowAdd(false)}
         />
       )}
@@ -128,15 +133,15 @@ export default function BankBook() {
           allowedModes={BANK_MODES}
           heads={heads}
           properties={properties}
-          locations={locations}
+          branches={branches}
           onClose={() => setEditing(null)}
         />
       )}
       {showContra && (
-        <ContraFormModal mode="add" locations={locations} onClose={() => setShowContra(false)} />
+        <ContraFormModal mode="add" branches={branches} onClose={() => setShowContra(false)} />
       )}
       {editingContra && (
-        <ContraFormModal mode="edit" voucher={editingContra} locations={locations} onClose={() => setEditingContra(null)} />
+        <ContraFormModal mode="edit" voucher={editingContra} branches={branches} onClose={() => setEditingContra(null)} />
       )}
     </div>
   )

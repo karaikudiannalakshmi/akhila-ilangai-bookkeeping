@@ -1,70 +1,60 @@
-// Seed data for Funds and Chart of Accounts
+// Seed data for the default Chart of Accounts (Income/Expense heads).
 // category: 'Revenue' or 'Capital'
 // type: 'Income' or 'Expense'
-
-export const FUNDS = [
-  { id: 'temple', name: 'Temple Fund' },
-  { id: 'general', name: 'General Fund' },
-  { id: 'building', name: 'Building Fund' },
-  { id: 'property', name: 'Property Fund' },
-]
-
-export const DEFAULT_LOCATIONS = [
-  { name: 'Colombo (Head Office)' },
-  { name: 'Aishwarya Lakshmi Temple - Colombo' },
-  { name: 'Jaffna Building' },
-  { name: 'Kilinochchi Training Centre' },
-]
+// branchId: matches BRANCH_SEED ids in src/utils/branch.js
 
 export const DEFAULT_HEADS = [
-  // Temple Fund - Income
-  { name: 'Hundial Collection', type: 'Income', category: 'Revenue', fundId: 'temple' },
-  { name: 'Pooja & Ritual Fees', type: 'Income', category: 'Revenue', fundId: 'temple' },
-  { name: 'Festival Collections', type: 'Income', category: 'Revenue', fundId: 'temple' },
-  { name: 'Temple Donations - General', type: 'Income', category: 'Revenue', fundId: 'temple' },
-  { name: 'Annadhanam/Prasadam Contributions', type: 'Income', category: 'Revenue', fundId: 'temple' },
+  // Aishwarya Lakshmi Temple - Income
+  { name: 'Hundial Collection', type: 'Income', category: 'Revenue', branchId: 'temple' },
+  { name: 'Pooja & Ritual Fees', type: 'Income', category: 'Revenue', branchId: 'temple' },
+  { name: 'Festival Collections', type: 'Income', category: 'Revenue', branchId: 'temple' },
+  { name: 'Temple Donations - General', type: 'Income', category: 'Revenue', branchId: 'temple' },
+  { name: 'Annadhanam/Prasadam Contributions', type: 'Income', category: 'Revenue', branchId: 'temple' },
 
-  // Temple Fund - Expense
-  { name: 'Pooja Materials', type: 'Expense', category: 'Revenue', fundId: 'temple' },
-  { name: 'Prasadam / Annadhanam Provisions', type: 'Expense', category: 'Revenue', fundId: 'temple' },
-  { name: 'Priest Honorarium', type: 'Expense', category: 'Revenue', fundId: 'temple' },
-  { name: 'Festival Expenses', type: 'Expense', category: 'Revenue', fundId: 'temple' },
-  { name: 'Temple Maintenance & Repairs', type: 'Expense', category: 'Revenue', fundId: 'temple' },
-  { name: 'Temple Renovation / Major Works', type: 'Expense', category: 'Capital', fundId: 'temple' },
+  // Aishwarya Lakshmi Temple - Expense
+  { name: 'Pooja Materials', type: 'Expense', category: 'Revenue', branchId: 'temple' },
+  { name: 'Prasadam / Annadhanam Provisions', type: 'Expense', category: 'Revenue', branchId: 'temple' },
+  { name: 'Priest Honorarium', type: 'Expense', category: 'Revenue', branchId: 'temple' },
+  { name: 'Festival Expenses', type: 'Expense', category: 'Revenue', branchId: 'temple' },
+  { name: 'Temple Maintenance & Repairs', type: 'Expense', category: 'Revenue', branchId: 'temple' },
+  { name: 'Temple Renovation / Major Works', type: 'Expense', category: 'Capital', branchId: 'temple' },
 
-  // General Fund - Income
-  { name: 'General Donations', type: 'Income', category: 'Revenue', fundId: 'general' },
-  { name: 'Membership Subscriptions', type: 'Income', category: 'Revenue', fundId: 'general' },
-  { name: 'Interest Income', type: 'Income', category: 'Revenue', fundId: 'general' },
-  { name: 'Sale of Publications/Items', type: 'Income', category: 'Revenue', fundId: 'general' },
-  { name: 'Grants Received', type: 'Income', category: 'Revenue', fundId: 'general' },
-  { name: 'Miscellaneous Income', type: 'Income', category: 'Revenue', fundId: 'general' },
+  // Head Office - Colombo - Income (includes rental income; properties sit at Head Office)
+  { name: 'General Donations', type: 'Income', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Membership Subscriptions', type: 'Income', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Interest Income', type: 'Income', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Sale of Publications/Items', type: 'Income', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Grants Received', type: 'Income', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Miscellaneous Income', type: 'Income', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Rent Income', type: 'Income', category: 'Revenue', branchId: 'headoffice' },
 
-  // General Fund - Expense
-  { name: 'Staff Salaries', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'EPF / ETF Contribution', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Office Supplies & Stationery', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Electricity & Water', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Telephone & Internet', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Bank Charges', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Audit & Professional Fees', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Insurance', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Statutory / Compliance Fees', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Community Welfare / Charity Disbursements', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Miscellaneous Expenses', type: 'Expense', category: 'Revenue', fundId: 'general' },
-  { name: 'Office Equipment / Furniture', type: 'Expense', category: 'Capital', fundId: 'general' },
+  // Head Office - Colombo - Expense
+  { name: 'Staff Salaries', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'EPF / ETF Contribution', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Office Supplies & Stationery', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Electricity & Water', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Telephone & Internet', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Bank Charges', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Audit & Professional Fees', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Insurance', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Statutory / Compliance Fees', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Community Welfare / Charity Disbursements', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Miscellaneous Expenses', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Property Maintenance', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Property Tax / Rates & Assessments', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Security Expenses', type: 'Expense', category: 'Revenue', branchId: 'headoffice' },
+  { name: 'Office Equipment / Furniture', type: 'Expense', category: 'Capital', branchId: 'headoffice' },
+  { name: 'Property Improvements', type: 'Expense', category: 'Capital', branchId: 'headoffice' },
 
-  // Building Fund
-  { name: 'Building Fund Donations', type: 'Income', category: 'Revenue', fundId: 'building' },
-  { name: 'Building Repairs (Routine)', type: 'Expense', category: 'Revenue', fundId: 'building' },
-  { name: 'Building Construction / Major Renovation', type: 'Expense', category: 'Capital', fundId: 'building' },
+  // Jaffna
+  { name: 'Jaffna Donations', type: 'Income', category: 'Revenue', branchId: 'jaffna' },
+  { name: 'Jaffna Maintenance & Repairs', type: 'Expense', category: 'Revenue', branchId: 'jaffna' },
+  { name: 'Jaffna Renovation / Major Works', type: 'Expense', category: 'Capital', branchId: 'jaffna' },
 
-  // Property Fund
-  { name: 'Rent Income', type: 'Income', category: 'Revenue', fundId: 'property' },
-  { name: 'Property Maintenance', type: 'Expense', category: 'Revenue', fundId: 'property' },
-  { name: 'Property Tax / Rates & Assessments', type: 'Expense', category: 'Revenue', fundId: 'property' },
-  { name: 'Security Expenses', type: 'Expense', category: 'Revenue', fundId: 'property' },
-  { name: 'Property Improvements', type: 'Expense', category: 'Capital', fundId: 'property' },
+  // Kilinochchi Training Centre (new/under construction — starter set)
+  { name: 'Kilinochchi Training Centre Donations', type: 'Income', category: 'Revenue', branchId: 'kilinochchi' },
+  { name: 'Kilinochchi Training Centre Maintenance', type: 'Expense', category: 'Revenue', branchId: 'kilinochchi' },
+  { name: 'Kilinochchi Training Centre Construction', type: 'Expense', category: 'Capital', branchId: 'kilinochchi' },
 ]
 
 export const PAYMENT_MODES = ['Cash', 'Cheque', 'Bank Transfer', 'Online']

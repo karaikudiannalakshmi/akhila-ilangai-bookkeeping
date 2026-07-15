@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
-import { FUNDS } from '../constants/chartOfAccounts'
+import { PAYMENT_MODES } from '../constants/chartOfAccounts'
+import { resolveBranchId } from '../utils/branch'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
-export default function VoucherFormModal({ mode, voucher, allowedModes, heads, properties, locations, onClose }) {
+export default function VoucherFormModal({ mode, voucher, allowedModes, heads, properties, branches, onClose }) {
   const isEdit = mode === 'edit'
 
   const [form, setForm] = useState({
@@ -13,7 +14,6 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
     type: voucher?.type || 'Income',
     headId: voucher?.headId || '',
     propertyId: voucher?.propertyId || '',
-    locationId: voucher?.locationId || '',
     amount: voucher?.amount || '',
     paymentMode: voucher?.paymentMode || allowedModes[0],
     narration: voucher?.narration || '',
@@ -29,19 +29,19 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
 
   const handleSave = async (e) => {
     e.preventDefault()
-    if (!form.headId || !form.amount || !form.locationId) return
+    if (!form.headId || !form.amount) return
     setSaving(true)
     const head = heads.find((h) => h.id === form.headId)
-    const location = locations.find((l) => l.id === form.locationId)
+    const branchId = resolveBranchId(head)
+    const branch = branches.find((b) => b.id === branchId)
     const payload = {
       date: form.date,
       type: form.type,
       headId: form.headId,
       headName: head.name,
       category: head.category,
-      fundId: head.fundId,
-      locationId: form.locationId,
-      locationName: location?.name || '',
+      branchId: branchId || null,
+      branchName: branch?.name || '',
       propertyId: isRentHead ? form.propertyId : null,
       amount: Number(form.amount),
       paymentMode: form.paymentMode,
@@ -75,22 +75,14 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
             </div>
           </div>
 
-          <label>Centre / Location</label>
-          <select required value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })}>
-            <option value="">-- Select Centre --</option>
-            {locations.filter((l) => l.active !== false).map((l) => (
-              <option key={l.id} value={l.id}>{l.name}</option>
-            ))}
-          </select>
-
-          <label>Head</label>
+          <label>Head (grouped by Branch)</label>
           <select value={form.headId} onChange={(e) => setForm({ ...form, headId: e.target.value })}>
             <option value="">-- Select --</option>
-            {FUNDS.map((fund) => {
-              const opts = activeHeads.filter((h) => h.fundId === fund.id)
+            {branches.map((b) => {
+              const opts = activeHeads.filter((h) => resolveBranchId(h) === b.id)
               if (opts.length === 0) return null
               return (
-                <optgroup key={fund.id} label={fund.name}>
+                <optgroup key={b.id} label={b.name}>
                   {opts.map((h) => <option key={h.id} value={h.id}>{h.name} {h.category === 'Capital' ? '(Capital)' : ''}</option>)}
                 </optgroup>
               )

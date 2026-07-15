@@ -1,25 +1,28 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../hooks/useCollection'
-import { FUNDS } from '../constants/chartOfAccounts'
+import PeriodFilter from './PeriodFilter'
+import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
+import { resolveBranchId } from '../utils/branch'
 
 export default function Ledger() {
   const { data: vouchers } = useCollection('vouchers')
-  const { data: locations } = useCollection('locations')
-  const [fundFilter, setFundFilter] = useState('all')
-  const [locationFilter, setLocationFilter] = useState('all')
+  const { data: branches } = useCollection('branches')
+  const { data: openingCashBankData } = useCollection('openingCashBank')
+  const opening = openingCashBankData.find((d) => d.id === 'main')
+  const [branchFilter, setBranchFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  const [period, setPeriod] = useState(defaultPeriodValue())
+
+  const { from, to, label } = resolvePeriod(period)
 
   const filtered = useMemo(() => {
     return vouchers
-      .filter((v) => fundFilter === 'all' || v.fundId === fundFilter)
-      .filter((v) => locationFilter === 'all' || v.locationId === locationFilter)
+      .filter((v) => branchFilter === 'all' || resolveBranchId(v) === branchFilter)
       .filter((v) => typeFilter === 'all' || v.type === typeFilter)
       .filter((v) => !from || v.date >= from)
       .filter((v) => !to || v.date <= to)
       .sort((a, b) => (a.date < b.date ? 1 : -1))
-  }, [vouchers, fundFilter, locationFilter, typeFilter, from, to])
+  }, [vouchers, branchFilter, typeFilter, from, to])
 
   const totalIncome = filtered.filter((v) => v.type === 'Income').reduce((s, v) => s + v.amount, 0)
   const totalExpense = filtered.filter((v) => v.type === 'Expense').reduce((s, v) => s + v.amount, 0)
@@ -38,14 +41,12 @@ export default function Ledger() {
         Read-only. To add, edit, or delete an entry — including cash/bank contra transfers — use the
         Cash Book or Bank Book. Changes made there appear here automatically.
       </p>
+      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Period: {label} ({from} to {to})</p>
+      <PeriodFilter vouchers={vouchers} openingDate={opening?.asOfDate} value={period} onChange={setPeriod} />
       <div className="filter-row">
-        <select value={fundFilter} onChange={(e) => setFundFilter(e.target.value)}>
-          <option value="all">All Funds</option>
-          {FUNDS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-        </select>
-        <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
-          <option value="all">All Centres</option>
-          {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+        <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
+          <option value="all">All Branches</option>
+          {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
           <option value="all">All Types</option>
@@ -53,8 +54,6 @@ export default function Ledger() {
           <option>Expense</option>
           <option>Contra</option>
         </select>
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
       </div>
 
       <div className="summary-grid">
@@ -64,14 +63,13 @@ export default function Ledger() {
       </div>
 
       <table>
-        <thead><tr><th>Date</th><th>Particulars</th><th>Fund</th><th>Centre</th><th>Mode</th><th>Amount</th></tr></thead>
+        <thead><tr><th>Date</th><th>Particulars</th><th>Branch</th><th>Mode</th><th>Amount</th></tr></thead>
         <tbody>
           {filtered.map((v) => (
             <tr key={v.id}>
               <td>{v.date}</td>
               <td>{particulars(v)}</td>
-              <td>{FUNDS.find((f) => f.id === v.fundId)?.name || (v.type === 'Contra' ? '—' : '')}</td>
-              <td>{v.locationName || '—'}</td>
+              <td>{branches.find((b) => b.id === resolveBranchId(v))?.name || v.branchName || v.locationName || '—'}</td>
               <td>{v.type === 'Contra' ? 'Contra' : v.paymentMode}</td>
               <td className={v.type === 'Income' ? 'income' : v.type === 'Expense' ? 'expense' : ''}>
                 {v.type === 'Income' ? '+' : v.type === 'Expense' ? '-' : ''}{v.amount.toLocaleString()}

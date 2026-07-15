@@ -4,30 +4,30 @@ import { db } from '../firebase'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
-export default function ContraFormModal({ mode, voucher, locations, onClose }) {
+export default function ContraFormModal({ mode, voucher, branches, onClose }) {
   const isEdit = mode === 'edit'
 
   const [form, setForm] = useState({
     date: voucher?.date || todayStr(),
     contraDirection: voucher?.contraDirection || 'CashToBank',
     amount: voucher?.amount || '',
-    locationId: voucher?.locationId || '',
+    branchId: voucher?.branchId || '',
     narration: voucher?.narration || '',
   })
   const [saving, setSaving] = useState(false)
 
   const handleSave = async (e) => {
     e.preventDefault()
-    if (!form.amount || !form.locationId) return
+    if (!form.amount || !form.branchId) return
     setSaving(true)
-    const location = locations.find((l) => l.id === form.locationId)
+    const branch = branches.find((b) => b.id === form.branchId)
     const payload = {
       type: 'Contra',
       contraDirection: form.contraDirection,
       date: form.date,
       amount: Number(form.amount),
-      locationId: form.locationId,
-      locationName: location?.name || '',
+      branchId: form.branchId,
+      branchName: branch?.name || '',
       narration: form.narration,
     }
     if (isEdit) {
@@ -65,11 +65,11 @@ export default function ContraFormModal({ mode, voucher, locations, onClose }) {
             </div>
           </div>
 
-          <label>Centre / Location</label>
-          <select required value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })}>
-            <option value="">-- Select Centre --</option>
-            {locations.filter((l) => l.active !== false).map((l) => (
-              <option key={l.id} value={l.id}>{l.name}</option>
+          <label>Branch</label>
+          <select required value={form.branchId} onChange={(e) => setForm({ ...form, branchId: e.target.value })}>
+            <option value="">-- Select Branch --</option>
+            {branches.filter((b) => b.active !== false).map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
 

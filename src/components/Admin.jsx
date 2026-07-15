@@ -1,19 +1,20 @@
 import { useState } from 'react'
-import { addDoc, collection, deleteDoc, doc, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useCollection } from '../hooks/useCollection'
-import { DEFAULT_HEADS, FUNDS, DEFAULT_LOCATIONS } from '../constants/chartOfAccounts'
+import { DEFAULT_HEADS } from '../constants/chartOfAccounts'
+import { BRANCH_SEED } from '../utils/branch'
 
 export default function Admin() {
   const { data: heads } = useCollection('coa')
   const { data: properties } = useCollection('properties')
-  const { data: locations } = useCollection('locations')
+  const { data: branches } = useCollection('branches')
 
-  const [newHead, setNewHead] = useState({ name: '', type: 'Expense', category: 'Revenue', fundId: 'general' })
+  const [newHead, setNewHead] = useState({ name: '', type: 'Expense', category: 'Revenue', branchId: 'headoffice' })
   const [newProperty, setNewProperty] = useState({ name: '', address: '', tenantName: '', tenantContact: '', monthlyRent: '' })
-  const [newLocation, setNewLocation] = useState('')
+  const [newBranch, setNewBranch] = useState('')
   const [seeding, setSeeding] = useState(false)
-  const [seedingLoc, setSeedingLoc] = useState(false)
+  const [seedingBranches, setSeedingBranches] = useState(false)
   const [msg, setMsg] = useState('')
 
   // Inline edit state
@@ -21,41 +22,41 @@ export default function Admin() {
   const [editHeadForm, setEditHeadForm] = useState({})
   const [editingPropertyId, setEditingPropertyId] = useState(null)
   const [editPropertyForm, setEditPropertyForm] = useState({})
-  const [editingLocationId, setEditingLocationId] = useState(null)
-  const [editLocationName, setEditLocationName] = useState('')
+  const [editingBranchId, setEditingBranchId] = useState(null)
+  const [editBranchName, setEditBranchName] = useState('')
 
-  const seedLocations = async () => {
-    setSeedingLoc(true)
-    for (const l of DEFAULT_LOCATIONS) {
-      await addDoc(collection(db, 'locations'), { ...l, active: true })
+  const seedBranches = async () => {
+    setSeedingBranches(true)
+    for (const b of BRANCH_SEED) {
+      await setDoc(doc(db, 'branches', b.id), { name: b.name, active: true })
     }
-    setSeedingLoc(false)
+    setSeedingBranches(false)
   }
 
-  const addLocation = async (e) => {
+  const addBranch = async (e) => {
     e.preventDefault()
-    if (!newLocation.trim()) return
-    await addDoc(collection(db, 'locations'), { name: newLocation.trim(), active: true })
-    setNewLocation('')
+    if (!newBranch.trim()) return
+    await addDoc(collection(db, 'branches'), { name: newBranch.trim(), active: true })
+    setNewBranch('')
   }
 
-  const toggleLocation = async (l) => {
-    await updateDoc(doc(db, 'locations', l.id), { active: !l.active })
+  const toggleBranch = async (b) => {
+    await updateDoc(doc(db, 'branches', b.id), { active: !b.active })
   }
 
-  const deleteLocation = async (id) => {
-    if (confirm('Delete this centre/location?')) await deleteDoc(doc(db, 'locations', id))
+  const deleteBranch = async (id) => {
+    if (confirm('Delete this branch?')) await deleteDoc(doc(db, 'branches', id))
   }
 
-  const startEditLocation = (l) => {
-    setEditingLocationId(l.id)
-    setEditLocationName(l.name)
+  const startEditBranch = (b) => {
+    setEditingBranchId(b.id)
+    setEditBranchName(b.name)
   }
 
-  const saveLocation = async (id) => {
-    if (!editLocationName.trim()) return
-    await updateDoc(doc(db, 'locations', id), { name: editLocationName.trim() })
-    setEditingLocationId(null)
+  const saveBranch = async (id) => {
+    if (!editBranchName.trim()) return
+    await updateDoc(doc(db, 'branches', id), { name: editBranchName.trim() })
+    setEditingBranchId(null)
   }
 
   const seedDefaults = async () => {
@@ -71,7 +72,7 @@ export default function Admin() {
     e.preventDefault()
     if (!newHead.name.trim()) return
     await addDoc(collection(db, 'coa'), { ...newHead, active: true })
-    setNewHead({ name: '', type: 'Expense', category: 'Revenue', fundId: 'general' })
+    setNewHead({ name: '', type: 'Expense', category: 'Revenue', branchId: branches[0]?.id || 'headoffice' })
   }
 
   const toggleHead = async (h) => {
@@ -86,7 +87,7 @@ export default function Admin() {
 
   const startEditHead = (h) => {
     setEditingHeadId(h.id)
-    setEditHeadForm({ name: h.name, type: h.type, category: h.category, fundId: h.fundId })
+    setEditHeadForm({ name: h.name, type: h.type, category: h.category, branchId: h.branchId || branches[0]?.id || 'headoffice' })
   }
 
   const saveHead = async (id) => {
@@ -133,47 +134,47 @@ export default function Admin() {
 
   return (
     <div>
-      {locations.length === 0 && (
+      {branches.length === 0 && (
         <div className="card">
-          <h2>Get Started - Centres</h2>
-          <p style={{ fontSize: '0.85rem' }}>Load the standard set of centres/locations for this organization.</p>
-          <button className="primary" onClick={seedLocations} disabled={seedingLoc}>
-            {seedingLoc ? 'Loading...' : `Load ${DEFAULT_LOCATIONS.length} Default Centres`}
+          <h2>Get Started - Branches</h2>
+          <p style={{ fontSize: '0.85rem' }}>Load the standard set of branches for this organization.</p>
+          <button className="primary" onClick={seedBranches} disabled={seedingBranches}>
+            {seedingBranches ? 'Loading...' : `Load ${BRANCH_SEED.length} Default Branches`}
           </button>
         </div>
       )}
 
       <div className="card">
-        <h2>Add Centre / Location</h2>
-        <form onSubmit={addLocation}>
-          <label>Centre Name</label>
-          <input value={newLocation} onChange={(e) => setNewLocation(e.target.value)} placeholder="e.g. Kilinochchi Training Centre" />
-          <button className="primary" type="submit">Add Centre</button>
+        <h2>Add Branch</h2>
+        <form onSubmit={addBranch}>
+          <label>Branch Name</label>
+          <input value={newBranch} onChange={(e) => setNewBranch(e.target.value)} placeholder="e.g. Kilinochchi Training Centre" />
+          <button className="primary" type="submit">Add Branch</button>
         </form>
       </div>
 
       <div className="card">
-        <h2>Centres ({locations.length})</h2>
+        <h2>Branches ({branches.length})</h2>
         <table>
           <thead><tr><th>Name</th><th></th></tr></thead>
           <tbody>
-            {locations.map((l) => (
-              <tr key={l.id} style={{ opacity: l.active === false ? 0.4 : 1 }}>
-                {editingLocationId === l.id ? (
+            {branches.map((b) => (
+              <tr key={b.id} style={{ opacity: b.active === false ? 0.4 : 1 }}>
+                {editingBranchId === b.id ? (
                   <>
-                    <td><input value={editLocationName} onChange={(e) => setEditLocationName(e.target.value)} /></td>
+                    <td><input value={editBranchName} onChange={(e) => setEditBranchName(e.target.value)} /></td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => saveLocation(l.id)}>Save</button>{' '}
-                      <button className="secondary small-btn" onClick={() => setEditingLocationId(null)}>Cancel</button>
+                      <button className="secondary small-btn" onClick={() => saveBranch(b.id)}>Save</button>{' '}
+                      <button className="secondary small-btn" onClick={() => setEditingBranchId(null)}>Cancel</button>
                     </td>
                   </>
                 ) : (
                   <>
-                    <td>{l.name}</td>
+                    <td>{b.name}</td>
                     <td>
-                      <button className="secondary small-btn" onClick={() => startEditLocation(l)}>Edit</button>{' '}
-                      <button className="secondary small-btn" onClick={() => toggleLocation(l)}>{l.active === false ? 'Enable' : 'Disable'}</button>{' '}
-                      <button className="secondary small-btn" onClick={() => deleteLocation(l.id)}>Delete</button>
+                      <button className="secondary small-btn" onClick={() => startEditBranch(b)}>Edit</button>{' '}
+                      <button className="secondary small-btn" onClick={() => toggleBranch(b)}>{b.active === false ? 'Enable' : 'Disable'}</button>{' '}
+                      <button className="secondary small-btn" onClick={() => deleteBranch(b.id)}>Delete</button>
                     </td>
                   </>
                 )}
@@ -185,8 +186,8 @@ export default function Admin() {
 
       {heads.length === 0 && (
         <div className="card">
-          <h2>Get Started</h2>
-          <p style={{ fontSize: '0.85rem' }}>No chart of accounts found yet. Load the standard set of income/expense heads for a temple + trust + rental property.</p>
+          <h2>Get Started - Heads</h2>
+          <p style={{ fontSize: '0.85rem' }}>No chart of accounts found yet. Load the standard set of income/expense heads for a temple + trust + rental property, mapped to your branches.</p>
           <button className="primary" onClick={seedDefaults} disabled={seeding}>
             {seeding ? 'Loading...' : `Load ${DEFAULT_HEADS.length} Default Heads`}
           </button>
@@ -215,9 +216,9 @@ export default function Admin() {
               </select>
             </div>
           </div>
-          <label>Fund</label>
-          <select value={newHead.fundId} onChange={(e) => setNewHead({ ...newHead, fundId: e.target.value })}>
-            {FUNDS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+          <label>Branch</label>
+          <select value={newHead.branchId} onChange={(e) => setNewHead({ ...newHead, branchId: e.target.value })}>
+            {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
           <button className="primary" type="submit">Add Head</button>
         </form>
@@ -227,7 +228,7 @@ export default function Admin() {
         <h2>Existing Heads ({heads.length})</h2>
         <table>
           <thead>
-            <tr><th>Name</th><th>Type</th><th>Category</th><th>Fund</th><th></th></tr>
+            <tr><th>Name</th><th>Type</th><th>Category</th><th>Branch</th><th></th></tr>
           </thead>
           <tbody>
             {heads.map((h) => (
@@ -248,8 +249,8 @@ export default function Admin() {
                       </select>
                     </td>
                     <td>
-                      <select value={editHeadForm.fundId} onChange={(e) => setEditHeadForm({ ...editHeadForm, fundId: e.target.value })}>
-                        {FUNDS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                      <select value={editHeadForm.branchId} onChange={(e) => setEditHeadForm({ ...editHeadForm, branchId: e.target.value })}>
+                        {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                       </select>
                     </td>
                     <td>
@@ -262,7 +263,7 @@ export default function Admin() {
                     <td>{h.name}</td>
                     <td className={h.type === 'Income' ? 'income' : 'expense'}>{h.type}</td>
                     <td>{h.category}</td>
-                    <td>{FUNDS.find((f) => f.id === h.fundId)?.name || h.fundId}</td>
+                    <td>{branches.find((b) => b.id === h.branchId)?.name || <span style={{ color: 'var(--red)' }}>Unclassified — edit to assign</span>}</td>
                     <td>
                       <button className="secondary small-btn" onClick={() => startEditHead(h)}>Edit</button>{' '}
                       <button className="secondary small-btn" onClick={() => toggleHead(h)}>{h.active === false ? 'Enable' : 'Disable'}</button>{' '}

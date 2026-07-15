@@ -7,12 +7,36 @@ for the rented property, and a fixed assets register for capital items.
 ## Stack
 React + Vite + Firebase Firestore + Vercel.
 
+## Financial Year & period selection
+The trust's financial year runs **1 April to 31 March**. Every report — Cash Book, Bank Book,
+All Entries, Ledgers, Trial Balance, Balance Sheet, Fixed Assets, Expenditure Analysis — has a
+period selector defaulting to the **current Financial Year**, with the option to switch to a
+specific **Month** or a **custom date Range**.
+
+Opening balances carry forward automatically: whichever period you select, the "Opening (Carried
+Forward)" figure shown is computed from your one-time manually entered Opening Balances (from the
+last physical balance sheet) plus every transaction that happened before that period started —
+there's no manual year-end closing step. The Balance Sheet additionally shows Opening → Movement
+→ Closing columns for Funds, Fixed Assets, Cash, and Bank for the selected period.
+
 ## Structure
-- Funds: Temple Fund, General Fund, Building Fund, Property Fund
-- Centres: Colombo (Head Office), Aishwarya Lakshmi Temple - Colombo, Jaffna Building, Kilinochchi Training Centre
-- Each income/expense head belongs to a Fund and is marked Revenue or Capital
-- Capital items are excluded from the Trial Balance and tracked in Fixed Assets instead
-- Rent income is tracked per property/tenant
+- **Branches** (replaces the old separate Fund + Centre/Location fields): Head Office - Colombo,
+  Aishwarya Lakshmi Temple - Colombo, Jaffna Building, Kilinochchi Training Centre. Manage these
+  under Admin — add, edit, disable, or delete branches as needed.
+- Each income/expense head belongs to exactly one Branch and is marked Revenue or Capital. When
+  entering a transaction, picking the Head automatically classifies it under the right Branch —
+  there's no separate Branch dropdown to fill in for regular income/expense entries.
+- Contra entries (cash ⇄ bank transfers) still need a manual Branch selection, since there's no
+  Head to derive it from.
+- Capital items are excluded from the Trial Balance and tracked in Fixed Assets instead.
+- Rent income is tracked per property/tenant.
+
+### Legacy data note
+Entries and heads created before the Fund→Branch merge are automatically mapped to the closest
+matching Branch (Temple Fund→Temple, General Fund→Head Office, Building Fund→Jaffna Building,
+Property Fund→Head Office) so historical reports keep working without a manual migration. Any head
+that can't be auto-mapped shows as "Unclassified" in Admin — just click Edit and pick the correct
+Branch once.
 
 ## Entry workflow
 All entries are added, edited, and deleted from **Cash Book** (Cash-mode transactions) or

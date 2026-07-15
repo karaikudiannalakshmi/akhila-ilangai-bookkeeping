@@ -1,14 +1,19 @@
 import { useMemo, useState } from 'react'
 import { useCollection } from '../hooks/useCollection'
-import { FUNDS } from '../constants/chartOfAccounts'
+import PeriodFilter from './PeriodFilter'
+import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
+import { resolveBranchId } from '../utils/branch'
 
 export default function GeneralLedger() {
   const { data: vouchers } = useCollection('vouchers')
   const { data: heads } = useCollection('coa')
+  const { data: branches } = useCollection('branches')
+  const { data: openingCashBankData } = useCollection('openingCashBank')
+  const opening = openingCashBankData.find((d) => d.id === 'main')
   const [headId, setHeadId] = useState('')
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  const [period, setPeriod] = useState(defaultPeriodValue())
 
+  const { from, to, label } = resolvePeriod(period)
   const selectedHead = heads.find((h) => h.id === headId)
 
   const rows = useMemo(() => {
@@ -32,22 +37,22 @@ export default function GeneralLedger() {
   return (
     <div className="card">
       <h2>Ledgers (Head-wise Account)</h2>
+      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Period: {label} ({from} to {to})</p>
       <div className="filter-row">
         <select value={headId} onChange={(e) => setHeadId(e.target.value)}>
           <option value="">-- Select a Head --</option>
-          {FUNDS.map((fund) => {
-            const opts = heads.filter((h) => h.fundId === fund.id)
+          {branches.map((b) => {
+            const opts = heads.filter((h) => resolveBranchId(h) === b.id)
             if (opts.length === 0) return null
             return (
-              <optgroup key={fund.id} label={fund.name}>
+              <optgroup key={b.id} label={b.name}>
                 {opts.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
               </optgroup>
             )
           })}
         </select>
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
       </div>
+      <PeriodFilter vouchers={vouchers} openingDate={opening?.asOfDate} value={period} onChange={setPeriod} />
 
       {!headId && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>Select a head above to view its ledger account.</p>}
 
@@ -60,12 +65,12 @@ export default function GeneralLedger() {
             </div>
           </div>
           <table>
-            <thead><tr><th>Date</th><th>Centre</th><th>Narration</th><th>Amount</th><th>Running Total</th></tr></thead>
+            <thead><tr><th>Date</th><th>Branch</th><th>Narration</th><th>Amount</th><th>Running Total</th></tr></thead>
             <tbody>
               {rows.map((v) => (
                 <tr key={v.id}>
                   <td>{v.date}</td>
-                  <td>{v.locationName || '—'}</td>
+                  <td>{v.branchName || v.locationName || '—'}</td>
                   <td>{v.narration || '—'}</td>
                   <td className={v.type === 'Income' ? 'income' : 'expense'}>{v.amount.toLocaleString()}</td>
                   <td>{v.balance.toLocaleString()}</td>

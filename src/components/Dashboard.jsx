@@ -1,33 +1,41 @@
 import { useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { useCollection } from '../hooks/useCollection'
-import { FUNDS } from '../constants/chartOfAccounts'
 import { cashDelta, bankDelta } from '../utils/cashBank'
+import { currentFY } from '../utils/financialYear'
+import { resolveBranchId, findRecordForBranch } from '../utils/branch'
 
 export default function Dashboard() {
   const { data: vouchers } = useCollection('vouchers')
   const { data: properties } = useCollection('properties')
   const { data: openingBalances } = useCollection('openingBalances')
+  const { data: branches } = useCollection('branches')
   const { data: openingCashBankData } = useCollection('openingCashBank')
   const opening = openingCashBankData.find((d) => d.id === 'main')
 
   const thisMonth = new Date().toISOString().slice(0, 7)
+  const fy = currentFY()
 
   const monthVouchers = vouchers.filter((v) => v.date.slice(0, 7) === thisMonth)
   const monthIncome = monthVouchers.filter((v) => v.type === 'Income').reduce((s, v) => s + v.amount, 0)
   const monthExpense = monthVouchers.filter((v) => v.type === 'Expense' && v.category === 'Revenue').reduce((s, v) => s + v.amount, 0)
 
+  const fyVouchers = vouchers.filter((v) => v.date >= fy.start && v.date <= fy.end)
+  const fyIncome = fyVouchers.filter((v) => v.type === 'Income').reduce((s, v) => s + v.amount, 0)
+  const fyExpense = fyVouchers.filter((v) => v.type === 'Expense' && v.category === 'Revenue').reduce((s, v) => s + v.amount, 0)
+
   const cashPosition = (opening?.cash || 0) + vouchers.reduce((s, v) => s + cashDelta(v), 0)
   const bankPosition = (opening?.bank || 0) + vouchers.reduce((s, v) => s + bankDelta(v), 0)
 
-  const fundBalances = useMemo(() => {
-    return FUNDS.map((f) => {
-      const opening = openingBalances.find((b) => b.fundId === f.id)?.amount || 0
-      const income = vouchers.filter((v) => v.fundId === f.id && v.type === 'Income').reduce((s, v) => s + v.amount, 0)
-      const expense = vouchers.filter((v) => v.fundId === f.id && v.type === 'Expense').reduce((s, v) => s + v.amount, 0)
-      return { ...f, balance: opening + income - expense }
+  const branchBalances = useMemo(() => {
+    return branches.map((b) => {
+      const openingRec = findRecordForBranch(openingBalances, b.id)
+      const opening = openingRec?.amount || 0
+      const income = vouchers.filter((v) => resolveBranchId(v) === b.id && v.type === 'Income').reduce((s, v) => s + v.amount, 0)
+      const expense = vouchers.filter((v) => resolveBranchId(v) === b.id && v.type === 'Expense').reduce((s, v) => s + v.amount, 0)
+      return { ...b, balance: opening + income - expense }
     })
-  }, [vouchers, openingBalances])
+  }, [vouchers, openingBalances, branches])
 
   const topExpenses = useMemo(() => {
     const byHead = {}
@@ -49,17 +57,18 @@ export default function Dashboard() {
     return Object.values(map).sort((a, b) => (a.month < b.month ? -1 : 1)).slice(-6)
   }, [vouchers])
 
-  const centreSummary = useMemo(() => {
-    const byLoc = {}
+  const branchSummary = useMemo(() => {
+    const byBranch = {}
     monthVouchers.forEach((v) => {
       if (v.type !== 'Income' && v.type !== 'Expense') return
-      const key = v.locationName || 'Unassigned'
-      if (!byLoc[key]) byLoc[key] = { name: key, income: 0, expense: 0 }
-      if (v.type === 'Income') byLoc[key].income += v.amount
-      else byLoc[key].expense += v.amount
+      const bId = resolveBranchId(v)
+      const key = branches.find((b) => b.id === bId)?.name || v.branchName || v.locationName || 'Unassigned'
+      if (!byBranch[key]) byBranch[key] = { name: key, income: 0, expense: 0 }
+      if (v.type === 'Income') byBranch[key].income += v.amount
+      else byBranch[key].expense += v.amount
     })
-    return Object.values(byLoc)
-  }, [monthVouchers])
+    return Object.values(byBranch)
+  }, [monthVouchers, branches])
 
   const rentArrears = properties.reduce((sum, p) => {
     const paid = vouchers
@@ -83,11 +92,20 @@ export default function Dashboard() {
       </div>
 
       <div className="card">
-        <h2>Centre-wise Summary (This Month)</h2>
+        <h2>{fy.label} — Year to Date</h2>
+        <div className="summary-grid" style={{ marginBottom: 0 }}>
+          <div className="summary-box"><div className="value income">LKR {fyIncome.toLocaleString()}</div><div className="label">Income (FYTD)</div></div>
+          <div className="summary-box"><div className="value expense">LKR {fyExpense.toLocaleString()}</div><div className="label">Expense (FYTD)</div></div>
+          <div className="summary-box"><div className="value">LKR {(fyIncome - fyExpense).toLocaleString()}</div><div className="label">Net Surplus (FYTD)</div></div>
+        </div>
+      </div>
+
+      <div className="card">
+        <h2>Branch-wise Summary (This Month)</h2>
         <table>
-          <thead><tr><th>Centre</th><th>Income</th><th>Expense</th><th>Net</th></tr></thead>
+          <thead><tr><th>Branch</th><th>Income</th><th>Expense</th><th>Net</th></tr></thead>
           <tbody>
-            {centreSummary.map((c) => (
+            {branchSummary.map((c) => (
               <tr key={c.name}>
                 <td>{c.name}</td>
                 <td className="income">{c.income.toLocaleString()}</td>
@@ -97,16 +115,16 @@ export default function Dashboard() {
             ))}
           </tbody>
         </table>
-        {centreSummary.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No entries this month yet.</p>}
+        {branchSummary.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No entries this month yet.</p>}
       </div>
 
       <div className="card">
-        <h2>Fund Balances</h2>
+        <h2>Branch Balances</h2>
         <table>
-          <thead><tr><th>Fund</th><th>Balance</th></tr></thead>
+          <thead><tr><th>Branch</th><th>Balance</th></tr></thead>
           <tbody>
-            {fundBalances.map((f) => (
-              <tr key={f.id}><td>{f.name}</td><td className={f.balance >= 0 ? 'income' : 'expense'}>LKR {f.balance.toLocaleString()}</td></tr>
+            {branchBalances.map((b) => (
+              <tr key={b.id}><td>{b.name}</td><td className={b.balance >= 0 ? 'income' : 'expense'}>LKR {b.balance.toLocaleString()}</td></tr>
             ))}
           </tbody>
         </table>

@@ -1,33 +1,29 @@
 import { useMemo, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useCollection } from '../hooks/useCollection'
+import PeriodFilter from './PeriodFilter'
+import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
+import { resolveBranchId } from '../utils/branch'
 
-const PERIODS = ['Month', 'Quarter', 'Year']
 const COLORS = ['#7a1f2b', '#c9a227', '#2e7d32', '#4a6fa5', '#b3261e', '#8e6c88', '#5c7457', '#d98c3f']
-
-function inPeriod(dateStr, period, ref) {
-  const d = new Date(dateStr)
-  const r = new Date(ref)
-  if (period === 'Month') return dateStr.slice(0, 7) === ref.slice(0, 7)
-  if (period === 'Year') return dateStr.slice(0, 4) === ref.slice(0, 4)
-  if (period === 'Quarter') {
-    const q = (m) => Math.floor(m / 3)
-    return d.getFullYear() === r.getFullYear() && q(d.getMonth()) === q(r.getMonth())
-  }
-  return true
-}
 
 export default function ExpenditureAnalysis() {
   const { data: vouchers } = useCollection('vouchers')
-  const { data: locations } = useCollection('locations')
-  const [period, setPeriod] = useState('Month')
-  const [refDate, setRefDate] = useState(new Date().toISOString().slice(0, 10))
-  const [locationFilter, setLocationFilter] = useState('all')
+  const { data: branches } = useCollection('branches')
+  const { data: openingCashBankData } = useCollection('openingCashBank')
+  const opening = openingCashBankData.find((d) => d.id === 'main')
+
+  const [period, setPeriod] = useState(defaultPeriodValue())
+  const [branchFilter, setBranchFilter] = useState('all')
+
+  const { from, to, label } = resolvePeriod(period)
 
   const expenseData = useMemo(() => {
     const filtered = vouchers
-      .filter((v) => v.type === 'Expense' && inPeriod(v.date, period, refDate))
-      .filter((v) => locationFilter === 'all' || v.locationId === locationFilter)
+      .filter((v) => v.type === 'Expense')
+      .filter((v) => !from || v.date >= from)
+      .filter((v) => !to || v.date <= to)
+      .filter((v) => branchFilter === 'all' || resolveBranchId(v) === branchFilter)
     const byHead = {}
     filtered.forEach((v) => {
       byHead[v.headName] = (byHead[v.headName] || 0) + v.amount
@@ -35,21 +31,19 @@ export default function ExpenditureAnalysis() {
     return Object.entries(byHead)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
-  }, [vouchers, period, refDate, locationFilter])
+  }, [vouchers, from, to, branchFilter])
 
   const total = expenseData.reduce((s, d) => s + d.value, 0)
 
   return (
     <div className="card">
       <h2>Expenditure Analysis</h2>
+      <p style={{ fontSize: '0.8rem', color: '#6b6258' }}>Period: {label} ({from} to {to})</p>
+      <PeriodFilter vouchers={vouchers} openingDate={opening?.asOfDate} value={period} onChange={setPeriod} />
       <div className="filter-row">
-        <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-          {PERIODS.map((p) => <option key={p}>{p}</option>)}
-        </select>
-        <input type="date" value={refDate} onChange={(e) => setRefDate(e.target.value)} />
-        <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
-          <option value="all">All Centres</option>
-          {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+        <select value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
+          <option value="all">All Branches</option>
+          {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
 
