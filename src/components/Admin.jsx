@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { addDoc, collection, deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useCollection } from '../hooks/useCollection'
 import { DEFAULT_HEADS } from '../constants/chartOfAccounts'
 import { BRANCH_SEED } from '../utils/branch'
+import { sortHeads } from '../utils/headSort'
 
 export default function Admin() {
   const { data: heads } = useCollection('coa')
@@ -213,6 +214,7 @@ export default function Admin() {
               <select value={newHead.category} onChange={(e) => setNewHead({ ...newHead, category: e.target.value })}>
                 <option>Revenue</option>
                 <option>Capital</option>
+                <option>Liability</option>
               </select>
             </div>
           </div>
@@ -227,7 +229,18 @@ export default function Admin() {
             <tr><th>Name</th><th>Type</th><th>Category</th><th></th></tr>
           </thead>
           <tbody>
-            {heads.map((h) => (
+            {sortHeads(heads).map((h, i, arr) => {
+              const labelFor = (head) => head.category === 'Liability' ? 'Liabilities' : head.category === 'Capital' ? 'Assets' : head.type === 'Income' ? 'Income' : 'Expenses'
+              const groupLabel = labelFor(h)
+              const prevGroupLabel = i > 0 ? labelFor(arr[i - 1]) : null
+              const showDivider = groupLabel !== prevGroupLabel
+              return (
+              <Fragment key={h.id}>
+                {showDivider && (
+                  <tr key={`divider-${groupLabel}`}>
+                    <td colSpan={4} style={{ background: '#f5efe0', fontWeight: 700, fontSize: '0.75rem', color: 'var(--maroon)', textTransform: 'uppercase' }}>{groupLabel}</td>
+                  </tr>
+                )}
               <tr key={h.id} style={{ opacity: h.active === false ? 0.4 : 1 }}>
                 {editingHeadId === h.id ? (
                   <>
@@ -242,6 +255,7 @@ export default function Admin() {
                       <select value={editHeadForm.category} onChange={(e) => setEditHeadForm({ ...editHeadForm, category: e.target.value })}>
                         <option>Revenue</option>
                         <option>Capital</option>
+                        <option>Liability</option>
                       </select>
                     </td>
                     <td>
@@ -262,7 +276,9 @@ export default function Admin() {
                   </>
                 )}
               </tr>
-            ))}
+              </Fragment>
+              )
+            })}
           </tbody>
         </table>
       </div>

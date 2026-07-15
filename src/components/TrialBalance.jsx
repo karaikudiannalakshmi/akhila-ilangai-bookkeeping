@@ -23,20 +23,23 @@ export default function TrialBalance() {
   }, [vouchers, from, to])
 
   // Single-view table (respects the branch filter dropdown: All = consolidated, or one branch)
-  const rows = useMemo(() => {
+  const { incomeRows, expenseRevenueRows } = useMemo(() => {
     const filtered = periodVouchers.filter((v) => branchFilter === 'all' || resolveBranchId(v) === branchFilter)
     const byHead = {}
     filtered.forEach((v) => {
       const key = v.headName
-      if (!byHead[key]) byHead[key] = { head: key, type: v.type, debit: 0, credit: 0 }
-      if (v.type === 'Income') byHead[key].credit += v.amount
-      else byHead[key].debit += v.amount
+      if (!byHead[key]) byHead[key] = { head: key, type: v.type, amount: 0 }
+      byHead[key].amount += v.amount
     })
-    return Object.values(byHead).sort((a, b) => a.head.localeCompare(b.head))
+    const all = Object.values(byHead)
+    return {
+      incomeRows: all.filter((r) => r.type === 'Income').sort((a, b) => a.head.localeCompare(b.head)),
+      expenseRevenueRows: all.filter((r) => r.type === 'Expense').sort((a, b) => a.head.localeCompare(b.head)),
+    }
   }, [periodVouchers, branchFilter])
 
-  const totalDebit = rows.reduce((s, r) => s + r.debit, 0)
-  const totalCredit = rows.reduce((s, r) => s + r.credit, 0)
+  const totalIncome = incomeRows.reduce((s, r) => s + r.amount, 0)
+  const totalExpense = expenseRevenueRows.reduce((s, r) => s + r.amount, 0)
 
   // Branch-wise comparison matrix (always all branches + total, regardless of the filter above)
   const matrix = useMemo(() => {
@@ -83,28 +86,47 @@ export default function TrialBalance() {
           </select>
         </div>
 
+        <h3 style={{ fontSize: '0.85rem', color: 'var(--green)' }}>Income</h3>
         <table>
-          <thead><tr><th>Head</th><th>Expenditure (Dr)</th><th>Income (Cr)</th></tr></thead>
+          <thead><tr><th>Head</th><th>Amount</th></tr></thead>
           <tbody>
-            {rows.map((r) => (
+            {incomeRows.map((r) => (
               <tr key={r.head}>
                 <td>{r.head}</td>
-                <td className="expense">{r.debit ? r.debit.toLocaleString() : '-'}</td>
-                <td className="income">{r.credit ? r.credit.toLocaleString() : '-'}</td>
+                <td className="income">{r.amount.toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
-            <tr style={{ fontWeight: 700 }}>
-              <td>Total</td>
-              <td className="expense">{totalDebit.toLocaleString()}</td>
-              <td className="income">{totalCredit.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td>Net Surplus / (Deficit)</td>
-              <td colSpan={2} style={{ fontWeight: 700 }}>LKR {(totalCredit - totalDebit).toLocaleString()}</td>
-            </tr>
+            <tr style={{ fontWeight: 700 }}><td>Total Income</td><td className="income">{totalIncome.toLocaleString()}</td></tr>
           </tfoot>
+        </table>
+        {incomeRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No income entries in this period.</p>}
+
+        <h3 style={{ fontSize: '0.85rem', color: 'var(--red)', marginTop: 16 }}>Expenditure</h3>
+        <table>
+          <thead><tr><th>Head</th><th>Amount</th></tr></thead>
+          <tbody>
+            {expenseRevenueRows.map((r) => (
+              <tr key={r.head}>
+                <td>{r.head}</td>
+                <td className="expense">{r.amount.toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr style={{ fontWeight: 700 }}><td>Total Expenditure</td><td className="expense">{totalExpense.toLocaleString()}</td></tr>
+          </tfoot>
+        </table>
+        {expenseRevenueRows.length === 0 && <p style={{ fontSize: '0.85rem', color: '#6b6258' }}>No expenditure entries in this period.</p>}
+
+        <table style={{ marginTop: 16 }}>
+          <tbody>
+            <tr style={{ fontWeight: 700 }}>
+              <td>Net Surplus / (Deficit)</td>
+              <td>LKR {(totalIncome - totalExpense).toLocaleString()}</td>
+            </tr>
+          </tbody>
         </table>
         <p style={{ fontSize: '0.75rem', color: '#6b6258', marginTop: 10 }}>
           Note: Capital expenditure is excluded here and tracked separately under Fixed Assets.

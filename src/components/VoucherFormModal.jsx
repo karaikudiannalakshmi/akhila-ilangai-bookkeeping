@@ -2,15 +2,26 @@ import { useMemo, useState } from 'react'
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 import { PAYMENT_MODES } from '../constants/chartOfAccounts'
+import { sortHeads } from '../utils/headSort'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
+const CLASSIFICATIONS = ['Income', 'Expenses', 'Assets', 'Liabilities']
+
+function classifyHead(h) {
+  if (h.category === 'Liability') return 'Liabilities'
+  if (h.category === 'Capital') return 'Assets'
+  if (h.type === 'Income') return 'Income'
+  return 'Expenses'
+}
+
 export default function VoucherFormModal({ mode, voucher, allowedModes, heads, properties, branches, onClose }) {
   const isEdit = mode === 'edit'
+  const initialHead = heads.find((h) => h.id === voucher?.headId)
 
   const [form, setForm] = useState({
     date: voucher?.date || todayStr(),
-    type: voucher?.type || 'Income',
+    classification: initialHead ? classifyHead(initialHead) : 'Income',
     headId: voucher?.headId || '',
     branchId: voucher?.branchId || '',
     propertyId: voucher?.propertyId || '',
@@ -21,8 +32,8 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
   const [saving, setSaving] = useState(false)
 
   const activeHeads = useMemo(
-    () => heads.filter((h) => h.active !== false && h.type === form.type),
-    [heads, form.type]
+    () => sortHeads(heads.filter((h) => h.active !== false && classifyHead(h) === form.classification)),
+    [heads, form.classification]
   )
   const selectedHead = heads.find((h) => h.id === form.headId)
   const isRentHead = selectedHead?.name === 'Rent Income'
@@ -35,7 +46,7 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
     const branch = branches.find((b) => b.id === form.branchId)
     const payload = {
       date: form.date,
-      type: form.type,
+      type: head.type, // cash-flow direction always comes from the head itself
       headId: form.headId,
       headName: head.name,
       category: head.category,
@@ -66,10 +77,9 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
               <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div>
-              <label>Type</label>
-              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value, headId: '' })}>
-                <option>Income</option>
-                <option>Expense</option>
+              <label>Classification</label>
+              <select value={form.classification} onChange={(e) => setForm({ ...form, classification: e.target.value, headId: '' })}>
+                {CLASSIFICATIONS.map((c) => <option key={c}>{c}</option>)}
               </select>
             </div>
           </div>
@@ -85,21 +95,20 @@ export default function VoucherFormModal({ mode, voucher, allowedModes, heads, p
           <label>Head</label>
           <select value={form.headId} onChange={(e) => setForm({ ...form, headId: e.target.value })}>
             <option value="">-- Select --</option>
-            {activeHeads.filter((h) => h.category === 'Revenue').length > 0 && (
-              <optgroup label="Revenue">
-                {activeHeads.filter((h) => h.category === 'Revenue').map((h) => (
-                  <option key={h.id} value={h.id}>{h.name}</option>
-                ))}
-              </optgroup>
-            )}
-            {activeHeads.filter((h) => h.category === 'Capital').length > 0 && (
-              <optgroup label="Capital">
-                {activeHeads.filter((h) => h.category === 'Capital').map((h) => (
-                  <option key={h.id} value={h.id}>{h.name}</option>
-                ))}
-              </optgroup>
-            )}
+            {activeHeads.map((h) => (
+              <option key={h.id} value={h.id}>{h.name} {h.type === 'Income' ? '(In)' : '(Out)'}</option>
+            ))}
           </select>
+          {form.classification === 'Liabilities' && activeHeads.length > 0 && (
+            <p style={{ fontSize: '0.75rem', color: '#6b6258', marginTop: 4 }}>
+              (In) = liability received, e.g. a loan taken. (Out) = liability repaid, e.g. a loan installment.
+            </p>
+          )}
+          {activeHeads.length === 0 && (
+            <p style={{ fontSize: '0.8rem', color: 'var(--red)', marginTop: 4 }}>
+              No {form.classification.toLowerCase()} heads set up yet — add one under Admin.
+            </p>
+          )}
 
           {isRentHead && (
             <>

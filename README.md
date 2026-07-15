@@ -37,7 +37,18 @@ purposes — no manual migration needed. Duplicate branch-specific heads from th
 old "Jaffna Donations" head) can be safely deleted under Admin once you've switched to using the
 generic "Donations - General" head with Branch selected separately.
 
-## Entry workflow
+## Entry classification
+When adding an entry in Cash Book or Bank Book, you now pick one of four **Classifications** first:
+- **Income** — money coming in (donations, hundial, rent, etc.)
+- **Expenses** — day-to-day operating costs
+- **Assets** — capital/asset-building expenditure (renovation, equipment, property improvements) —
+  these are excluded from the Income & Expenditure Account and tracked under Fixed Assets instead
+- **Liabilities** — loans/creditors. A Liability head can represent money received (marked "In" —
+  e.g. a loan taken) or money repaid (marked "Out" — e.g. a loan installment); both directions live
+  under the same Liabilities classification, distinguished per head
+Choosing a classification narrows the Head dropdown to only the heads tagged under it. Set up
+Liability heads under Admin (Category: Liability) once you're ready to track loans/creditors —
+there's no dedicated Liabilities register (like Fixed Assets has) yet; let me know if you want one.
 All entries are added, edited, and deleted from **Cash Book** (Cash-mode transactions) or
 **Bank Book** (Cheque / Bank Transfer / Online transactions). There is no separate "Daily Entry"
 screen. **All Entries** is a read-only consolidated view — since every report reads from the same

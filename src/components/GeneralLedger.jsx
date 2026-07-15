@@ -3,6 +3,7 @@ import { useCollection } from '../hooks/useCollection'
 import PeriodFilter from './PeriodFilter'
 import { resolvePeriod, defaultPeriodValue } from '../utils/financialYear'
 import { resolveBranchId } from '../utils/branch'
+import { sortHeads } from '../utils/headSort'
 
 export default function GeneralLedger() {
   const { data: vouchers } = useCollection('vouchers')
@@ -17,8 +18,8 @@ export default function GeneralLedger() {
   const { from, to, label } = resolvePeriod(period)
   const selectedHead = heads.find((h) => h.id === headId)
 
-  const incomeHeads = heads.filter((h) => h.type === 'Income')
-  const expenseHeads = heads.filter((h) => h.type === 'Expense')
+  const incomeHeads = sortHeads(heads.filter((h) => h.type === 'Income'))
+  const expenseHeads = sortHeads(heads.filter((h) => h.type === 'Expense'))
 
   const rows = useMemo(() => {
     if (!headId) return []
