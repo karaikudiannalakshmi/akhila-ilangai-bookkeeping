@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import logo from './assets/logo.jpg'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import Ledger from './components/Ledger'
@@ -41,7 +42,8 @@ export default function App() {
   return (
     <div>
       <div className="app-header">
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <img src={logo} alt="Kamban Lanka" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
           <h1>Akhila Ilangai Kamban Kazhakam</h1>
         </div>
         <button

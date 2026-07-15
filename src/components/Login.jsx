@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import logo from '../assets/logo.jpg'
 
 export default function Login({ onSuccess }) {
   const [pin, setPin] = useState('')
@@ -17,6 +18,7 @@ export default function Login({ onSuccess }) {
 
   return (
     <div className="login-screen">
+      <img src={logo} alt="Kamban Lanka" style={{ width: 110, height: 110, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 2px 10px rgba(0,0,0,0.25)' }} />
       <div className="card">
         <h2>Akhila Ilangai Kamban Kazhakam</h2>
         <form onSubmit={handleSubmit}>
